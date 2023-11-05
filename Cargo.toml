@@ -1,0 +1,23 @@
+[package]
+name = "cloud-champion"
+version = "0.1.0"
+edition = "2021"
+description = ""
+readme = "README.md"
+repository = "https://github.com/Enet4/10xCloudChampion"
+license = "MIT OR Apache-2.0"
+keywords = ["yew", "trunk"]
+categories = ["gui", "wasm", "web-programming"]
+
+[features]
+playground = []
+
+[dependencies]
+gloo-timers = "0.3.0"
+yew = { version = "0.21", features = ["csr"] }
+
+[profile.release]
+panic = 'abort'
+codegen-units = 1
+opt-level = 'z'
+lto = 'thin'

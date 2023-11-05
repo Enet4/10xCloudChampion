@@ -1,0 +1,41 @@
+.power {
+    width: 24rem;
+    border: 1px solid #020202;
+    background-color: #dedede;
+    padding: 8px;
+
+    * {
+        font-family: monospace;
+        font-size: 0.8rem;
+    }
+}
+
+.load-bar {
+    position: relative;
+    max-width: 40rem;
+    height: 20px;
+    border: 1px solid #020202;
+}
+
+.load-bar-inner {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    // use gradient in background color
+    background: linear-gradient(to right, #0f0, #ff0, #f00);
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+}
+
+// have another component covering the load, aligned to the end
+.load-bar-cover {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #fefefe;
+
+    // smooth
+    transition: all 0.1s linear;
+}

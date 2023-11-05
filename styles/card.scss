@@ -1,0 +1,80 @@
+.card {
+    margin: 4px;
+    border: 1px solid #020202;
+    border-radius: 3px;
+    box-shadow: 0 0 4px 0 rgba(0, 0, 0, 0.2);
+    background-color: #99dcde;
+    padding: 0.5rem;
+    width: 18rem;
+    height: 5rem;
+    font-size: 1rem;
+    text-align: left;
+
+    // used for containing title and cost
+    div {
+        margin-top: 0;
+        display: flex;
+        flex-direction: row;
+
+        .cost {
+            display: inline-block;
+            font-size: 0.85rem;
+            margin-left: auto;
+            text-align: right;
+        }
+    }
+
+
+    // used for description
+    p {
+        font-size: 0.85rem;
+        margin: 4px 0px 0px 0px;
+    }
+}
+.card.disabled {
+    background-color: #cecece;
+    border: 1px solid #666;
+
+    * {
+        color: #666
+    }
+}
+  
+// pulsating animation when it is created
+.card:not(.disabled) {
+    animation: card_pulsate 0.25s linear;
+}
+
+@keyframes card_pulsate {
+    0% {
+      opacity: 0;
+    }
+    25% {
+        transform: scale(1.15);
+    }
+    50% {
+        transform: scale(1);
+    }
+    75% {
+        transform: scale(1.15);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(1),
+    }
+}
+
+.card:not(.disabled):hover {
+    // animate with small translation
+    transform: translate(0rem, -0.2rem);
+    // smooth
+    transition: transform 0.12s ease;
+
+    cursor: pointer;
+
+}
+
+.card:not(.disabled):active {
+    // color change
+    background-color: #80b9bb;
+}
