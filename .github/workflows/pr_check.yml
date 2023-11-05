@@ -22,6 +22,7 @@ jobs:
         toolchain: stable
         cache: true
         target: wasm32-unknown-unknown
+        rustflags: "-W warnings"
     - name: Install trunk
       uses: jetli/trunk-action@v0.1.0
       with:
