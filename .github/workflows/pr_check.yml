@@ -3,6 +3,7 @@ name: pr_check
 on:
   workflow_dispatch:
   push:
+    branches: [ main ]
   pull_request:
     branches: [ main ]
 
@@ -16,13 +17,11 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    - name: install toolchain
-      uses: actions-rs/toolchain@v1
+    - uses: actions-rust-lang/setup-rust-toolchain@v1
       with:
         toolchain: stable
+        cache: true
         target: wasm32-unknown-unknown
-        override: true
-        profile: minimal
     - name: Install trunk
       uses: jetli/trunk-action@v0.1.0
       with:
@@ -30,4 +29,4 @@ jobs:
     - name: Build
       run: trunk build
     - name: Run tests
-      run: cargo test --verbose
+      run: cargo test
