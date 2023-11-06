@@ -1,15 +1,17 @@
 [package]
 name = "cloud-champion"
+publish = false
 version = "0.1.0"
 edition = "2021"
-description = ""
+description = "10x Cloud Champion: A simulation clicker game"
 readme = "README.md"
 repository = "https://github.com/Enet4/10xCloudChampion"
 license = "MIT OR Apache-2.0"
-keywords = ["yew", "trunk"]
-categories = ["gui", "wasm", "web-programming"]
+keywords = ["yew", "trunk", "clicker", "simulation"]
+categories = ["gui", "wasm", "web-programming", "games"]
 
 [features]
+# replace main webapp with a UI component playground
 playground = []
 
 [dependencies]
