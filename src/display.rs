@@ -1,5 +1,7 @@
 use std::fmt;
 
+const SEPARATOR_CHAR: &str = "\u{2006}";
+
 /// A formatting utility that adds a half-width space for each 3 digits
 pub struct Separating(pub i64);
 
@@ -28,7 +30,7 @@ impl fmt::Display for Separating {
         for (i, part) in parts.iter().rev().enumerate() {
             if !first {
                 // half-width space
-                f.write_str("\u{2006}")?;
+                f.write_str(SEPARATOR_CHAR)?;
             }
             if i == 0 {
                 write!(f, "{part}")?;
@@ -48,16 +50,16 @@ mod tests {
 
     #[test]
     fn test_separating() {
-        assert_eq!(Separating(0).to_string(), "0",);
+        assert_eq!(Separating(0).to_string(), "0");
 
-        assert_eq!(Separating(1).to_string(), "1",);
+        assert_eq!(Separating(1).to_string(), "1");
 
-        assert_eq!(Separating(1_000).to_string(), "1 000",);
+        assert_eq!(Separating(1_000).to_string(), "1\u{2006}000");
 
-        assert_eq!(Separating(435).to_string(), "435",);
+        assert_eq!(Separating(435).to_string(), "435");
 
-        assert_eq!(Separating(499_999_999).to_string(), "499 999 999",);
+        assert_eq!(Separating(499_999_999).to_string(), "499\u{2006}999\u{2006}999");
 
-        assert_eq!(Separating(-45_300).to_string(), "-45 300",);
+        assert_eq!(Separating(-45_300).to_string(), "-45\u{2006}300");
     }
 }
