@@ -21,3 +21,10 @@ Started working on request events and request event queue.
 Copied and adapted `GameWatch` from 10x Sprint Master.
 Added pop-up thingies whenever the user presses the cloud service Op button.
 Started work on Cloud users, their specification and live details.
+
+## Day 3: 2023-11-06
+
+Set up a development container so that I can work on the game from GitHub Codespaces.
+Edited the readme and tweaked Cargo.toml.
+Fixed tests for `Separating` display component.
+Tweaked styles a bit.
