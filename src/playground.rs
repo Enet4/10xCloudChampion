@@ -95,9 +95,15 @@ pub fn playground() -> Html {
                             />
                             <Card
                             id="1"
+                            title="Powerup"
+                            description="Test improving your services"
+                            cost={Cost::base_ops(500)}
+                            />
+                            <Card
+                            id="1"
                             title="Unreachable"
                             description="This tests a card which can never be reached"
-                            cost={Cost::super_ops(999999)}
+                            cost={Cost::super_ops(100_000)}
                             disabled=true
                             />
                     </Panel>

@@ -120,14 +120,26 @@ impl fmt::Display for Cost {
             if some {
                 f.write_str(" + ")?;
             }
-            write!(f, "{} base ops", self.base_ops)?;
+            write!(f, "{} base ops", Compact(self.base_ops))?;
             some = true;
         }
         if self.super_ops != Ops(0) {
             if some {
                 f.write_str(" + ")?;
             }
-            write!(f, "{} super ops", self.super_ops)?;
+            write!(f, "{} super ops", Compact(self.super_ops))?;
+        }
+        if self.epic_ops != Ops(0) {
+            if some {
+                f.write_str(" + ")?;
+            }
+            write!(f, "{} epic ops", Compact(self.epic_ops))?;
+        }
+        if self.awesome_ops != Ops(0) {
+            if some {
+                f.write_str(" + ")?;
+            }
+            write!(f, "{} awesome ops", Compact(self.awesome_ops))?;
         }
         Ok(())
     }
@@ -225,6 +237,7 @@ impl fmt::Display for Money {
     }
 }
 
+/// A count of cloud service operations
 #[derive(Debug, Default, Copy, Clone, PartialEq, Eq, Hash, Ord, PartialOrd)]
 pub struct Ops(pub i64);
 
@@ -267,6 +280,34 @@ impl std::ops::Mul<i32> for Ops {
 impl fmt::Display for Ops {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", Separating(self.0))
+    }
+}
+
+/// A way to present operation counts in a compact way
+/// (e.g. in cards)
+#[derive(Debug)]
+pub struct Compact(Ops);
+
+impl fmt::Display for Compact {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let ops = self.0;
+        if ops.0 % 1_000_000_000_000 == 0 {
+            write!(f, "{}T", Separating(ops.0 / 1_000_000_000_000))
+        } else if ops.0 % 1_000_000_000 == 0 {
+            write!(f, "{}G", Separating(ops.0 / 1_000_000_000))
+        } else if ops.0 % 1_000_000 == 0 {
+            write!(f, "{}M", Separating(ops.0 / 1_000_000))
+        } else if ops.0 % 1_000 == 0 {
+            write!(f, "{}k", Separating(ops.0 / 1_000))
+        } else {
+            write!(f, "{}", Separating(ops.0))
+        }
+    }
+}
+
+impl Ops {
+    pub fn compact(self) -> Compact {
+        Compact(self)
     }
 }
 
