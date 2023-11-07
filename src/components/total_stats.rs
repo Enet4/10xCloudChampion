@@ -35,10 +35,15 @@ pub fn TotalStats(props: &TotalStatsProps) -> Html {
         ("awesome", props.awesome_service),
     ]
     .iter()
-    .filter_map(|(name, maybe)| maybe.map(|ops| (name, ops)))
-    .map(|(name, counts)| {
-        html! {
-            <li><span>{"Total "} {name} {" ops:"}</span> {" "} {counts.total}<br/></li>
+    .map(|(name, maybe)| {
+        if let Some(counts) = maybe {
+            html! {
+                <li><span>{"Total "} {name} {" ops:"}</span> {" "} {counts.total}</li>
+            }
+        } else {
+            html! {
+                <li class="hidden"><span>{"Total "} {name} {" ops:"}</span> {" 0"}</li>
+            }
         }
     })
     .collect();
