@@ -7,13 +7,14 @@ use std::collections::VecDeque;
 use gloo_timers::callback::Timeout;
 use yew::prelude::*;
 
-use crate::{components::pop::Pop, ServiceKind};
+use crate::{components::pop::Pop, Money, ServiceKind};
 
 #[derive(Debug, PartialEq, Properties)]
 pub struct CloudServiceProps {
     pub kind: ServiceKind,
-    #[prop_or_default]
-    pub on_click: Option<Callback<()>>,
+    pub on_click: Callback<()>,
+    pub on_price_change: Callback<Money>,
+    pub price: Money,
 }
 
 /// the information to be shown in a cloud service op pop-up
@@ -96,9 +97,7 @@ impl Component for CloudService {
         let onclick = {
             let link = ctx.link().clone();
             let onclick = Callback::from(move |_e: MouseEvent| {
-                if let Some(on_click) = &on_click {
-                    on_click.emit(());
-                }
+                on_click.emit(());
                 link.send_message(CloudServiceMessage::New(CountPop { count: 1 }));
             });
             onclick
@@ -109,8 +108,15 @@ impl Component for CloudService {
         html! {
             <div class="service" style={style}>
                 <h4>{ name }</h4>
-                <button onclick={onclick}>{"Op"}</button>
-
+                <button class="op" onclick={onclick}>{"Op"}</button>
+                // price and buttons to lower/raise
+                <div class="price">
+                    <span>{"Price: "}</span><span class="money">{ctx.props().price.to_string()}</span>
+                </div>
+                <div class="change">
+                    <button>{"lower"}</button>
+                    <button>{"raise"}</button>
+                </div>
                 // pop-ups
                 {
                     self.popups.iter().map(|(k, c)|

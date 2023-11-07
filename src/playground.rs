@@ -28,6 +28,34 @@ pub fn playground() -> Html {
         epic_service,
         ..Default::default()
     };
+
+    let base_c = html! {
+        <CloudService
+            kind={ServiceKind::Base}
+            price={Money::millicents(5)}
+            on_click={|_| ()}
+            on_price_change={|_| ()}
+            />
+    };
+
+    let super_c = html! {
+        <CloudService
+            kind={ServiceKind::Super}
+            price={Money::millicents(50)}
+            on_click={|_| ()}
+            on_price_change={|_| ()}
+            />
+    };
+
+    let epic_c = html! {
+        <CloudService
+            kind={ServiceKind::Epic}
+            price={Money::cents(2)}
+            on_click={|_| ()}
+            on_price_change={|_| ()}
+            />
+    };
+
     html! {
         <>
             <header>
@@ -46,9 +74,9 @@ pub fn playground() -> Html {
                 <div class="panel-container">
                     <Panel title="Services">
                         <div>
-                            <CloudService kind={ServiceKind::Base} />
-                            <CloudService kind={ServiceKind::Super} />
-                            <CloudService kind={ServiceKind::Epic} />
+                            {base_c}
+                            {super_c}
+                            {epic_c}
                         </div>
                     </Panel>
                     <Panel title="Business">
