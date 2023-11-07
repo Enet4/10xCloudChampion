@@ -85,6 +85,14 @@ impl Cost {
             awesome_ops: Ops(awesome_ops as i64),
         }
     }
+
+    pub fn is_nothing(&self) -> bool {
+        self.money == Money(0)
+            && self.base_ops == Ops(0)
+            && self.super_ops == Ops(0)
+            && self.epic_ops == Ops(0)
+            && self.awesome_ops == Ops(0)
+    }
 }
 
 impl std::ops::Add for Cost {

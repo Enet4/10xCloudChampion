@@ -39,15 +39,23 @@ pub fn Card(props: &CardProps) -> Html {
         })
     };
 
+    let cost = if props.cost.is_nothing() {
+        html! {}
+    } else {
+        html! {
+            <span class="cost">
+                {"("}
+                {props.cost.to_string()}
+                {")"}
+            </span>
+        }
+    };
+
     html! {
         <button key={props.id} class={class} disabled={disabled} onclick={on_card_click}>
             <div>
                 <b>{ &props.title }</b>
-                <span class="cost">
-                    {"("}
-                    {props.cost.to_string()}
-                    {")"}
-                </span>
+                <span class="cost">{cost}</span>
             </div>
             <p>{ &props.description }</p>
         </button>
