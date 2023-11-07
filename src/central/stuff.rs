@@ -39,10 +39,11 @@ impl Cost {
         }
     }
     pub const fn cents(money_cents: i64) -> Self {
-        Self::money(Money::from_cents(money_cents))
+        Self::money(Money::cents(money_cents))
     }
+
     pub const fn dollars(money_cents: i64) -> Self {
-        Self::money(Money::from_dollars(money_cents))
+        Self::money(Money::dollars(money_cents))
     }
 
     pub const fn base_ops(base_ops: i32) -> Self {
@@ -124,36 +125,46 @@ impl fmt::Display for Cost {
     }
 }
 
-/// Money, with precision down to the cent decimal.
+/// Money, with precision down to the 1000th of a cent.
 #[derive(Debug, Default, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Money(i64);
 
 impl Money {
     #[inline]
-    pub const fn from_cents(amount: i64) -> Self {
-        Self(amount * 10)
+    pub const fn zero() -> Self {
+        Money(0)
     }
 
     #[inline]
-    pub const fn from_dec_cents(amount: i64) -> Self {
+    pub const fn millicents(amount: i64) -> Self {
         Self(amount)
     }
 
     #[inline]
-    pub const fn from_dollars(amount: i64) -> Self {
+    pub const fn dec_cents(amount: i64) -> Self {
+        Self(amount * 100)
+    }
+
+    #[inline]
+    pub const fn cents(amount: i64) -> Self {
         Self(amount * 1_000)
     }
 
-    /// discard the decimal of cents
+    #[inline]
+    pub const fn dollars(amount: i64) -> Self {
+        Self(amount * 100_000)
+    }
+
+    /// discard the decimals of cents
     #[inline]
     pub const fn into_cent(self) -> Self {
-        Self(self.0 / 10 * 10)
+        Self(self.0 / 1_000 * 1_000)
     }
 
     /// discard the decimal part
     #[inline]
     pub const fn into_dollars(self) -> Self {
-        Self(self.0 / 1_000 * 1_000)
+        Self(self.0 / 100_000 * 100_000)
     }
 }
 
@@ -183,17 +194,25 @@ impl std::ops::Mul<i32> for Money {
 
 impl fmt::Display for Money {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let units = self.0 / 1000;
-        let cents = self.0 % 1000;
-        if cents == 0 {
-            write!(f, "${}", Separating(units))
+        let dollars = self.0 / 100_000;
+        let millicents = self.0 % 100_000;
+        if millicents == 0 {
+            write!(f, "${}", Separating(dollars))
         } else {
-            let dec_cents = self.0 % 10;
-            if dec_cents == 0 {
-                write!(f, "${}.{:02}", Separating(units), cents)
-            } else {
-                write!(f, "${}.{:02}", Separating(units), cents)
+            if self.0 % 1_000 == 0 {
+                // no fraction smaller than cent
+                return write!(f, "${}.{:02}", Separating(dollars), millicents / 1_000);
             }
+            if self.0 % 100 == 0 {
+                // no fraction smaller than 10th of a cent
+                return write!(f, "${}.{:03}", Separating(dollars), millicents / 100);
+            }
+            if self.0 % 10 == 0 {
+                // no fraction smaller than 100th of a cent
+                return write!(f, "${}.{:04}", Separating(dollars), millicents / 10);
+            }
+            // maximum precision
+            write!(f, "${}.{:05}", Separating(dollars), millicents)
         }
     }
 }
@@ -382,5 +401,31 @@ impl ServiceKind {
             Self::Epic => 2,
             Self::Awesome => 3,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::Money;
+
+    #[test]
+    fn test_money() {
+        let money = Money::cents(123_456_789);
+        assert_eq!(money.into_cent(), Money::cents(123_456_789));
+        assert_eq!(money.into_dollars(), Money::dollars(1_234_567));
+        assert_eq!(money.to_string(), "$1\u{2006}234\u{2006}567.89");
+
+        let money2 = Money::dollars(9_000);
+        assert_eq!(money2.into_cent(), Money::dollars(9_000));
+        assert_eq!(money2.into_dollars(), Money::dollars(9_000));
+        assert_eq!(money2.to_string(), "$9\u{2006}000");
+
+        let money3 = Money::millicents(5);
+        assert_eq!(money3.into_cent(), Money::cents(0));
+        assert_eq!(money3.into_dollars(), Money::dollars(0));
+        assert_eq!(money3.to_string(), "$0.00005");
+
+        let money4 = money2 + money3;
+        assert_eq!(money4.to_string(), "$9\u{2006}000.00005");
     }
 }

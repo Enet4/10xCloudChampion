@@ -11,7 +11,7 @@ use cloud_champion::{components::card::*, Cost};
 #[function_component(Playground)]
 pub fn playground() -> Html {
     let business_props = BusinessProps {
-        funds: Money::from_dollars(1000),
+        funds: Money::dollars(1000),
         base_service: ServiceCounts {
             available: Ops(1000),
             total: Ops(2000),
