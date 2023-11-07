@@ -28,3 +28,11 @@ Set up a development container so that I can work on the game from GitHub Codesp
 Edited the readme and tweaked Cargo.toml.
 Fixed tests for `Separating` display component.
 Tweaked styles a bit.
+
+## Day 4: 2023-11-07
+
+Extended money precision to 1000th of a cent, and added tests for it.
+Tweaked total stats UI component.
+Added price UI to cloud services.
+Implemented compact presentations for op counts (e.g. "10M base ops").
+Tweak styles some more.
