@@ -18,7 +18,7 @@
 
         .cost {
             display: inline-block;
-            font-size: 0.85rem;
+            font-size: 0.825rem;
             margin-left: auto;
             text-align: right;
         }
@@ -31,6 +31,7 @@
         margin: 4px 0px 0px 0px;
     }
 }
+
 .card.disabled {
     background-color: #cecece;
     border: 2px outset #333;
@@ -39,7 +40,7 @@
         color: #666
     }
 }
-  
+
 // pulsating animation when it is created
 .card:not(.disabled) {
     animation: card_pulsate 0.25s linear;
@@ -47,18 +48,22 @@
 
 @keyframes card_pulsate {
     0% {
-      opacity: 0;
+        opacity: 0;
     }
+
     25% {
         transform: scale(1.15);
     }
+
     50% {
         transform: scale(1);
     }
+
     75% {
         transform: scale(1.15);
         opacity: 1;
     }
+
     100% {
         transform: scale(1),
     }
