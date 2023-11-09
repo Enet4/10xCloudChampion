@@ -36,3 +36,9 @@ Tweaked total stats UI component.
 Added price UI to cloud services.
 Implemented compact presentations for op counts (e.g. "10M base ops").
 Tweak styles some more.
+
+## Day 5: 2023-11-09
+
+Added UI for computational nodes in a single rack.
+Added preliminary event reactor construct
+(PRNG event sampler).
