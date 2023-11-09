@@ -1,5 +1,5 @@
 [package]
-name = "cloud-champion"
+name = "gameoff2023-10x-cloud-champion"
 publish = false
 version = "0.1.0"
 edition = "2021"
@@ -15,7 +15,11 @@ categories = ["gui", "wasm", "web-programming", "games"]
 playground = []
 
 [dependencies]
+getrandom = { version = "0.2.11", features = ["js"] }
 gloo-timers = "0.3.0"
+rand = "0.8.5"
+rand_distr = "0.4.3"
+rand_pcg = "0.3.1"
 yew = { version = "0.21", features = ["csr"] }
 
 [profile.release]

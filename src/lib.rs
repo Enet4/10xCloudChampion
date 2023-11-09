@@ -7,6 +7,9 @@ pub mod display;
 use std::fmt;
 
 use gloo_timers::callback::Interval;
+use rand::SeedableRng;
+use rand_distr::Distribution;
+use rand_pcg::Pcg32;
 
 pub use crate::central::cloud_user::CloudClientSpec;
 pub use crate::central::queue::Tick;
@@ -46,5 +49,34 @@ impl GameWatch {
 
         let interval = Interval::new(MILLISECONDS_PER_CYCLE, tick_fn);
         self.interval = Some(interval);
+    }
+}
+
+/// Game construct that produces events over game time.
+#[derive(Debug)]
+pub struct EventReactor {
+    /// the random number generator
+    rng: Pcg32,
+}
+
+impl EventReactor {
+    pub fn new() -> Self {
+        EventReactor {
+            rng: Pcg32::from_entropy(),
+        }
+    }
+
+    /// Sample when the next request to cloud service is going to be made
+    /// based on the given demand for that service.
+    pub fn next_request(&mut self, base_demand: f32, multiplier: f32) -> f32 {
+        let lambda = base_demand * multiplier;
+        let distribution = rand_distr::Exp::new(lambda).unwrap();
+        distribution.sample(&mut self.rng)
+    }
+}
+
+impl Default for EventReactor {
+    fn default() -> Self {
+        Self::new()
     }
 }
