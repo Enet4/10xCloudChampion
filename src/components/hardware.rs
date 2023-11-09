@@ -2,7 +2,7 @@
 
 use yew::prelude::*;
 
-use crate::{components::load_bar::LoadBar, Memory};
+use crate::{components::load_bar::LoadBar, Memory, Money};
 
 #[derive(Debug, PartialEq, Properties)]
 pub struct PowerProps {
@@ -27,6 +27,54 @@ pub fn Power(props: &PowerProps) -> Html {
             <div class="power-mem">
                 {"Memory: "} {memory_used} {"/"} {props.mem_total} <LoadBar load={props.mem_load}/>
             </div>
+        </div>
+    }
+}
+
+#[derive(Debug, PartialEq, Properties)]
+pub struct NodeProps {
+    /// number of CPUs in the node
+    pub cpus: u32,
+    /// RAM available in the node
+    pub ram: Memory,
+}
+
+/// A node in the Cloud network
+#[function_component]
+pub fn Node(props: &NodeProps) -> Html {
+    let cores = if props.cpus == 1 { "core" } else { "cores" };
+
+    // TODO pass
+    let upgrade_cost = Money::dollars(500);
+
+    html! {
+        <div class="node-container">
+            <div class="node">
+                // decorative lines
+                <div class="lines" />
+                // blinking light
+                <div class="led" />
+            </div>
+            <span class="specs">{props.cpus} {" "} {cores} {", "} {props.ram} {" RAM"}</span>
+            <div class="upgrade">
+                <span>{upgrade_cost.to_string()}</span>
+                <button>{"Upgrade"}</button>
+            </div>
+        </div>
+    }
+}
+
+#[derive(Debug, PartialEq, Properties)]
+pub struct RackProps {
+    pub children: Html,
+}
+
+/// A rack of nodes
+#[function_component]
+pub fn Rack(props: &RackProps) -> Html {
+    html! {
+        <div class="rack">
+            {props.children.clone()}
         </div>
     }
 }

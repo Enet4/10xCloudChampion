@@ -1,6 +1,6 @@
 use cloud_champion::central::state::ServiceCounts;
 use cloud_champion::components::business::{Business, BusinessProps};
-use cloud_champion::components::hardware::Power;
+use cloud_champion::components::hardware::{Node, Power, Rack};
 use cloud_champion::components::services::CloudService;
 use cloud_champion::components::total_stats::TotalStats;
 use cloud_champion::{Memory, Money, Ops, ServiceKind};
@@ -84,7 +84,9 @@ pub fn playground() -> Html {
                     </Panel>
                     <Panel title="Hardware">
                         <Power cpu_load={0.3} mem_load={0.5} mem_total={Memory::mb(256)} />
-
+                        <Rack>
+                            <Node cpus={1} ram={Memory::mb(256)} />
+                        </Rack>
                     </Panel>
                     <Panel title="Projects">
                         <Card

@@ -1,0 +1,127 @@
+.power {
+    width: 24rem;
+    border: 1px solid #020202;
+    background-color: #dedede;
+    padding: 8px;
+
+    * {
+        font-family: monospace;
+        font-size: 0.85rem;
+    }
+}
+
+.load-bar {
+    position: relative;
+    max-width: 40rem;
+    height: 20px;
+    border: 1px solid #020202;
+    margin-bottom: 4px;
+}
+
+.load-bar-inner {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    // use gradient in background color
+    background: linear-gradient(to right, #0f0, #ff0, #f00);
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+}
+
+// have another component covering the load, aligned to the end
+.load-bar-cover {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #fefefe;
+
+    // smooth
+    transition: all 0.1s linear;
+}
+
+.node-container {
+    display: inline-flex;
+    width: 100%;
+    padding-top: 4px;
+    padding-left: 2px;
+    padding-right: 2px;
+    font-size: 0.85rem;
+
+    .node {
+        display: inline-block;
+        position: relative;
+        height: 24px;
+        width: 96px;
+        border: 1px solid #020202;
+        background-color: #999;
+
+        .lines {
+            position: absolute;
+            top: 2px;
+            bottom: 2px;
+            left: 2px;
+            right: 2px;
+            border-top: 1px solid #020202;
+            border-bottom: 1px solid #020202;
+        }
+
+        .led {
+            position: absolute;
+            top: 8px;
+            left: 3px;
+            width: 5px;
+            height: 5px;
+            border-radius: 10px;
+            border: 1px solid #111;
+            animation: led-blink 0.5s step-start infinite;
+        }
+    }
+
+    span.specs {
+        margin-left: 8px;
+        // center vertically with node div
+        margin-top: auto;
+        margin-bottom: auto;
+        text-align: center;
+        vertical-align: super;
+    }
+
+    // the buttons to upgrade the equipment
+    .upgrade {
+        margin-left: auto;
+        margin-top: auto;
+        margin-bottom: auto;
+        display: inline-block;
+        vertical-align: top;
+
+        span {
+            display: inline-block;
+            margin-left: 4px;
+            margin-right: 4px;
+            text-align: right;
+            width: 3.5rem;
+        }
+    }
+}
+
+@keyframes led-blink {
+    0% {
+        background-color: #f00;
+    }
+
+    50% {
+        background-color: #000;
+    }
+
+    100% {
+        background-color: #f00;
+    }
+}
+
+.rack {
+    margin-top: 8px;
+    padding: 2px;
+    border: 1px solid #bbb;
+}
