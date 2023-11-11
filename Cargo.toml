@@ -10,6 +10,9 @@ license = "MIT OR Apache-2.0"
 keywords = ["yew", "trunk", "clicker", "simulation"]
 categories = ["gui", "wasm", "web-programming", "games"]
 
+[lib]
+name = "cloud_champion"
+
 [features]
 # replace main webapp with a UI component playground
 playground = []

@@ -95,13 +95,13 @@ pub fn playground() -> Html {
                             description="A test card to give you a welcoming bonus"
                             cost={Cost::nothing()}
                             />
-                            <Card
+                        <Card
                             id="1"
                             title="Powerup"
                             description="Test improving your services"
                             cost={Cost::base_ops(500)}
                             />
-                            <Card
+                        <Card
                             id="1"
                             title="Unreachable"
                             description="This tests a card which can never be reached"
