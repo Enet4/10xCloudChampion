@@ -50,3 +50,11 @@ Reworked timestamps and logic for working with game time
 Added player action data structure.
 Initiated work on active game event generation engine.
 Added first revision of user action message.
+
+## Day 7: 2023-11-12
+
+Added modal UI component.
+Added state, engine, and watch to playground,
+added preliminary logic to apply player actions
+and apply card effects.
+Refactored business and total stats component.
