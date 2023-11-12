@@ -8,6 +8,7 @@ pub mod all;
 /// including in what circumstances it should become available.
 #[derive(Debug)]
 pub struct CardSpec {
+    pub id: &'static str,
     pub title: &'static str,
     pub description: &'static str,
     pub cost: Cost,
@@ -108,4 +109,6 @@ pub enum CardEffect {
     AddFunds(Money),
     /// Add cloud clients with the given specification
     AddClients(CloudUserSpec),
+    /// Upgrade software services to the next level
+    UpgradeServices,
 }

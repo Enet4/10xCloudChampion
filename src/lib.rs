@@ -25,6 +25,9 @@ pub const TICKS_PER_CYCLE: u32 = 5;
 /// how many time units are in a single millisecond
 pub const TIME_UNITS_PER_MILLISECOND: u32 = 10;
 
+/// how many time units are in a single tick
+pub const TIME_UNITS_PER_TICK: u32 = TIME_UNITS_PER_MILLISECOND * MILLISECONDS_PER_CYCLE;
+
 /// The time watch service, emits ticks at a fixed interval when started.
 pub struct GameWatch {
     interval: Option<Interval>,
@@ -53,6 +56,32 @@ impl GameWatch {
 
         let interval = Interval::new(MILLISECONDS_PER_CYCLE, tick_fn);
         self.interval = Some(interval);
+    }
+
+    pub fn stop(&mut self) {
+        if let Some(interval) = self.interval.take() {
+            interval.cancel();
+        }
+    }
+}
+
+/// Top level game message for the game loop and reacting to player actions.
+#[derive(Debug, Clone, PartialEq)]
+pub enum GameMsg {
+    /// the player performed an action
+    Action(UserAction),
+    /// the game watch ticked,
+    /// so the game loop should advance
+    Tick,
+    /// the game loop should stop
+    Pause,
+    /// the game loop should resume
+    Resume,
+}
+
+impl From<UserAction> for GameMsg {
+    fn from(action: UserAction) -> Self {
+        GameMsg::Action(action)
     }
 }
 

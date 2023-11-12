@@ -4,9 +4,12 @@
 
 use std::collections::VecDeque;
 
-use crate::{EventGenerator, Memory, Money, WorldState};
+use crate::{EventGenerator, Memory, Money, UserAction, WorldState};
 
-use super::queue::{RequestEvent, RequestEventQueue, RequestEventStage, Time};
+use super::{
+    cards::{all::ALL_CARDS, CardEffect, CardSpec},
+    queue::{RequestEvent, RequestEventQueue, RequestEventStage, Time},
+};
 
 /// all levels of CPU upgrades
 /// (count, base speed, and cost),
@@ -79,8 +82,70 @@ impl GameEngine {
         }
     }
 
+    pub fn apply_action(&mut self, state: &mut WorldState, action: UserAction) {
+        match action {
+            UserAction::ApplyCost { cost } => {
+                state.funds -= cost.money;
+                state.base_service.available -= cost.base_ops;
+                state.super_service.available -= cost.super_ops;
+                state.epic_service.available -= cost.epic_ops;
+                state.awesome_service.available -= cost.awesome_ops;
+                state.spent += cost.money;
+            }
+            UserAction::Payment { amount } => {
+                state.funds -= amount;
+                state.spent += amount;
+            }
+            UserAction::ChangePrice { kind, new_price } => {
+                // change the price and recalculate demand
+                let service = state.service_by_kind_mut(kind);
+            }
+            UserAction::UpgradeCpu { node } => todo!(),
+            UserAction::UpgradeRam { node } => todo!(),
+            UserAction::AddNode => todo!(),
+            UserAction::UseCard { id } => {
+                // TODO
+                // 1. find the card
+                match ALL_CARDS.binary_search_by_key(&id.as_ref(), |c| &c.id) {
+                    Ok(index) => {
+                        let card = &ALL_CARDS[index];
+                        // 2. apply the card's effects
+                        if self.apply_card(state, card) {
+                            // 3. add the card to the used cards list
+                            // (but only if the card was actually applied)
+                        }
+                    }
+                    Err(_) => {
+                        // warn
+                        gloo_console::warn!("Bad card identifier ", id.as_ref());
+                    }
+                }
+            }
+        }
+    }
+
+    fn apply_card(&mut self, state: &mut WorldState, card: &CardSpec) -> bool {
+        let effect = &card.effect;
+        let cost = &card.cost;
+        // check if player can afford the card
+        if !state.can_afford(cost) {
+            return false;
+        }
+
+        match effect {
+            CardEffect::PublishService(_) => todo!(),
+            CardEffect::UnlockService(_) => todo!(),
+            CardEffect::AddFunds(money) => {
+                state.funds += *money;
+            }
+            CardEffect::AddClients(_) => todo!(),
+            CardEffect::UpgradeServices => todo!(),
+        }
+        true
+    }
+
     /// Process the game state and produce new events.
-    pub fn process(&mut self, state: &mut WorldState, time: Time) {
+    pub fn update(&mut self, state: &mut WorldState, time: Time) {
         // grab upcoming events
         let mut events = self.queue.events_until(time);
 

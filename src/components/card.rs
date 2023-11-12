@@ -18,8 +18,7 @@ pub struct CardProps {
     pub on_click: Option<Callback<()>>,
 }
 
-/// The bonus/purchase card component.
-///
+/// The bonus/purchase project card component.
 #[function_component]
 pub fn Card(props: &CardProps) -> Html {
     let class = if props.disabled {

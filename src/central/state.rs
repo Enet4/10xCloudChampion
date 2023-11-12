@@ -1,7 +1,7 @@
 //! Module for the full game state
 //!
 
-use crate::{CloudUserSpec, Money, Ops};
+use crate::{CloudUserSpec, Cost, Money, Ops, ServiceKind};
 
 use super::{engine::CloudNode, queue::Time};
 
@@ -20,21 +20,24 @@ pub struct WorldState {
     /// (a higher number means more client inflow)
     pub demand: f32,
 
+    /// the number of upgrades done to the cloud service software
+    pub software_level: u8,
+
     /// the op counts of the base service
-    pub base_service: ServiceCounts,
+    pub base_service: ServiceInfo,
 
     /// the op counts of the super service
-    pub super_service: ServiceCounts,
+    pub super_service: ServiceInfo,
 
     /// the op counts of the epic service
-    pub epic_service: ServiceCounts,
+    pub epic_service: ServiceInfo,
 
     /// the total number of requests dropped
     /// due to lack of system capacity
     pub requests_dropped: u64,
 
     /// the op counts of the awesome service
-    pub awesome_service: ServiceCounts,
+    pub awesome_service: ServiceInfo,
 
     /// all active client specifications
     pub user_specs: Vec<CloudUserSpec>,
@@ -65,6 +68,23 @@ impl WorldState {
             .ok()
             .map(|index| &mut self.nodes[index])
     }
+
+    pub fn service_by_kind_mut(&mut self, kind: crate::ServiceKind) -> &mut ServiceInfo {
+        match kind {
+            ServiceKind::Base => &mut self.base_service,
+            ServiceKind::Super => &mut self.super_service,
+            ServiceKind::Epic => &mut self.epic_service,
+            ServiceKind::Awesome => &mut self.awesome_service,
+        }
+    }
+
+    pub fn can_afford(&self, cost: &Cost) -> bool {
+        self.funds >= cost.money
+            && self.base_service.available >= cost.base_ops
+            && self.super_service.available >= cost.super_ops
+            && self.epic_service.available >= cost.epic_ops
+            && self.awesome_service.available >= cost.awesome_ops
+    }
 }
 
 impl Default for WorldState {
@@ -74,6 +94,7 @@ impl Default for WorldState {
             funds: Default::default(),
             spent: Default::default(),
             demand: 0.0,
+            software_level: 0,
             base_service: Default::default(),
             super_service: Default::default(),
             epic_service: Default::default(),
@@ -92,8 +113,14 @@ pub struct UsedCard {
     pub time: Time,
 }
 
+/// Live information about a cloud service in the game,
+/// namely the current price per op,
+/// how many ops are available to spend,
+/// how many ops were performed in total.
 #[derive(Debug, Default, Copy, Clone, PartialEq)]
-pub struct ServiceCounts {
+pub struct ServiceInfo {
+    /// the price per op
+    pub price: Money,
     /// the number of operations that the player has available
     /// from the service
     pub available: Ops,

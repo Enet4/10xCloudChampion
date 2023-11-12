@@ -2,27 +2,27 @@
 //! (all operations done so far)
 use yew::prelude::*;
 
-use crate::central::state::ServiceCounts;
+use crate::Ops;
 
 #[derive(Debug, Default, PartialEq, Properties)]
 pub struct TotalStatsProps {
-    /// the counts for the base service
-    pub base_service: ServiceCounts,
+    /// the total op count for the base service
+    pub base_ops_total: Ops,
 
-    /// the counts for the super service
+    /// the total op count for the super service
     /// (or `None` if this service is not available yet)
     #[prop_or_default]
-    pub super_service: Option<ServiceCounts>,
+    pub super_ops_total: Option<Ops>,
 
-    /// the counts for the epic service
+    /// the total op count for the epic service
     /// (or `None` if this service is not available yet)
     #[prop_or_default]
-    pub epic_service: Option<ServiceCounts>,
+    pub epic_ops_total: Option<Ops>,
 
-    /// the counts for the awesome service
+    /// the total op count for the awesome service
     /// (or `None` if this service is not available yet)
     #[prop_or_default]
-    pub awesome_service: Option<ServiceCounts>,
+    pub awesome_ops_total: Option<Ops>,
 }
 
 /// The stats component.
@@ -30,15 +30,15 @@ pub struct TotalStatsProps {
 #[function_component]
 pub fn TotalStats(props: &TotalStatsProps) -> Html {
     let available_ops_to_show: Html = [
-        ("super", props.super_service),
-        ("epic", props.epic_service),
-        ("awesome", props.awesome_service),
+        ("super", props.super_ops_total),
+        ("epic", props.epic_ops_total),
+        ("awesome", props.awesome_ops_total),
     ]
     .iter()
     .map(|(name, maybe)| {
         if let Some(counts) = maybe {
             html! {
-                <li><span>{"Total "} {name} {" ops:"}</span> {" "} {counts.total}</li>
+                <li><span>{"Total "} {name} {" ops:"}</span> {" "} {counts}</li>
             }
         } else {
             html! {
@@ -50,7 +50,7 @@ pub fn TotalStats(props: &TotalStatsProps) -> Html {
 
     html! {
         <ul class="stats">
-            <li><span>{"Total base ops: "}</span> {props.base_service.total}</li>
+            <li><span>{"Total base ops: "}</span> {props.base_ops_total}</li>
             {available_ops_to_show}
         </ul>
     }

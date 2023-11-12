@@ -202,11 +202,23 @@ impl std::ops::Add for Money {
     }
 }
 
+impl std::ops::AddAssign for Money {
+    fn add_assign(&mut self, rhs: Self) {
+        self.0 += rhs.0;
+    }
+}
+
 impl std::ops::Sub for Money {
     type Output = Self;
 
     fn sub(self, rhs: Self) -> Self::Output {
         Money(self.0 - rhs.0)
+    }
+}
+
+impl std::ops::SubAssign for Money {
+    fn sub_assign(&mut self, rhs: Self) {
+        self.0 -= rhs.0;
     }
 }
 
@@ -273,11 +285,23 @@ impl std::ops::Add for Ops {
     }
 }
 
+impl std::ops::AddAssign for Ops {
+    fn add_assign(&mut self, rhs: Self) {
+        self.0 += rhs.0;
+    }
+}
+
 impl std::ops::Sub for Ops {
     type Output = Self;
 
     fn sub(self, rhs: Self) -> Self::Output {
         Ops(self.0 - rhs.0)
+    }
+}
+
+impl std::ops::SubAssign for Ops {
+    fn sub_assign(&mut self, rhs: Self) {
+        self.0 += rhs.0;
     }
 }
 

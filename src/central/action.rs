@@ -1,5 +1,7 @@
 //! Module for containing all player actions and their consequences.
 
+use std::borrow::Cow;
+
 use crate::{Cost, Money, ServiceKind};
 
 /// An action that a player can take that affects the game state.
@@ -30,6 +32,6 @@ pub enum UserAction {
     /// looking it up on the list of all cards.
     UseCard {
         /// the card's identifier
-        id: usize,
+        id: Cow<'static, str>,
     },
 }
