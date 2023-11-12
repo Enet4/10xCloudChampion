@@ -199,6 +199,7 @@ name = "gameoff2023-10x-cloud-champion"
 version = "0.1.0"
 dependencies = [
  "getrandom",
+ "gloo-console 0.3.0",
  "gloo-timers 0.3.0",
  "rand",
  "rand_distr",

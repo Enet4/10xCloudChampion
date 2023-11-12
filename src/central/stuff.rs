@@ -109,6 +109,12 @@ impl std::ops::Add for Cost {
     }
 }
 
+impl std::iter::Sum for Cost {
+    fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
+        iter.fold(Self::nothing(), |a, b| a + b)
+    }
+}
+
 impl fmt::Display for Cost {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let mut some = false;
@@ -209,6 +215,12 @@ impl std::ops::Mul<i32> for Money {
 
     fn mul(self, rhs: i32) -> Self::Output {
         Money(self.0 * rhs as i64)
+    }
+}
+
+impl std::iter::Sum for Money {
+    fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
+        iter.fold(Self::zero(), |a, b| a + b)
     }
 }
 
@@ -316,19 +328,23 @@ impl Ops {
 pub struct Memory(i64);
 
 impl Memory {
-    pub fn bytes(bytes: i64) -> Self {
+    pub const fn zero() -> Self {
+        Self(0)
+    }
+
+    pub const fn bytes(bytes: i64) -> Self {
         Self(bytes)
     }
 
-    pub fn kb(kb: i64) -> Self {
+    pub const fn kb(kb: i64) -> Self {
         Self(kb * 1_000)
     }
 
-    pub fn mb(mb: i64) -> Self {
+    pub const fn mb(mb: i64) -> Self {
         Self(mb * 1_000_000)
     }
 
-    pub fn gb(gb: i64) -> Self {
+    pub const fn gb(gb: i64) -> Self {
         Self(gb * 1_000_000_000)
     }
 }
@@ -374,6 +390,12 @@ impl std::ops::Mul<f32> for Memory {
 
     fn mul(self, rhs: f32) -> Self::Output {
         Memory((self.0 as f32 * rhs) as i64)
+    }
+}
+
+impl std::iter::Sum for Memory {
+    fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
+        iter.fold(Self::bytes(0), |a, b| a + b)
     }
 }
 

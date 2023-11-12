@@ -19,6 +19,7 @@ playground = []
 
 [dependencies]
 getrandom = { version = "0.2.11", features = ["js"] }
+gloo-console = "0.3.0"
 gloo-timers = "0.3.0"
 rand = "0.8.5"
 rand_distr = "0.4.3"
