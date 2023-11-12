@@ -42,3 +42,11 @@ Tweak styles some more.
 Added UI for computational nodes in a single rack.
 Added preliminary event reactor construct
 (PRNG event sampler).
+
+## Day 6: 2023-11-11
+
+Reworked timestamps and logic for working with game time
+(there are now approximately N time units per millisecond).
+Added player action data structure.
+Initiated work on active game event generation engine.
+Added first revision of user action message.
