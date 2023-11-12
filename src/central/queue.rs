@@ -5,19 +5,25 @@ use std::collections::VecDeque;
 
 use super::stuff::ServiceKind;
 
-/// type for the time counter
-pub type Tick = u64;
+/// type for an absolute time measure.
+pub type Time = u64;
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub struct RequestEvent {
-    timestamp: Tick,
-    amount: u32,
-    service: ServiceKind,
-    kind: RequestEventKind,
+    pub timestamp: Time,
+    /// unique identifier (index) to the cloud user specification
+    /// (or `None` if the request was triggered by the player)
+    pub user_spec_id: Option<u32>,
+    pub amount: u32,
+    pub service: ServiceKind,
+    /// whether it was a bad request that will not fulfill anything
+    pub bad: bool,
+    /// the request event stage
+    pub kind: RequestEventStage,
 }
 
-#[derive(Debug, Clone, PartialEq)]
-pub enum RequestEventKind {
+#[derive(Debug, Copy, Clone, PartialEq)]
+pub enum RequestEventStage {
     /// a request or request set has just arrived at the system.
     /// if more than one node is available,
     /// routing may still be necessary
@@ -29,17 +35,47 @@ pub enum RequestEventKind {
     RequestProcessed { node_num: u32 },
 }
 
+impl RequestEvent {
+    pub fn new_arrived(
+        timestamp: Time,
+        user_spec_id: Option<u32>,
+        amount: u32,
+        service: ServiceKind,
+        bad: bool,
+    ) -> Self {
+        Self {
+            timestamp,
+            user_spec_id,
+            amount,
+            service,
+            bad,
+            kind: RequestEventStage::RequestArrived,
+        }
+    }
+
+    pub fn into_routed(self, duration: u32, node_num: u32) -> Self {
+        Self {
+            timestamp: self.timestamp + duration as u64,
+            user_spec_id: self.user_spec_id,
+            amount: self.amount,
+            service: self.service,
+            bad: self.bad,
+            kind: RequestEventStage::RequestRouted { node_num },
+        }
+    }
+}
+
 #[derive(Debug)]
 pub struct RequestEventQueue {
-    /// the last processed tick
-    last_tick: Tick,
+    /// the time of the last process tick
+    last_time: Time,
     queue: VecDeque<RequestEvent>,
 }
 
 impl RequestEventQueue {
     pub fn new() -> Self {
         Self {
-            last_tick: 0,
+            last_time: 0,
             queue: VecDeque::new(),
         }
     }
@@ -55,27 +91,21 @@ impl RequestEventQueue {
         }
     }
 
-    /// Retrieve a single event from the queue
-    pub fn pop(&mut self) -> Option<RequestEvent> {
-        self.queue.pop_front()
-    }
-
     /// get the list of all events until the given tick,
     /// updating the last tick
-    pub fn events_until(&mut self, tick: Tick) -> Vec<RequestEvent> {
-        let mut events = vec![];
-        while let Some(event) = self.pop() {
+    pub fn events_until(&mut self, tick: Time) -> Vec<RequestEvent> {
+        let mut events = Vec::new();
+        while let Some(event) = self.queue.front() {
             if event.timestamp > tick {
-                self.push(event);
                 break;
             }
-            events.push(event);
+            events.push(self.queue.pop_front().unwrap());
         }
-        self.last_tick = tick;
+        self.last_time = tick;
         events
     }
 
-    pub fn last_tick(&self) -> Tick {
-        self.last_tick
+    pub fn last_time(&self) -> Time {
+        self.last_time
     }
 }

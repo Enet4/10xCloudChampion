@@ -1,14 +1,14 @@
 //! Module for the full game state
 //!
 
-use crate::{Money, Ops};
+use crate::{CloudUserSpec, Money, Ops};
 
-use super::{cloud_user::CloudClientSet, queue::Tick};
+use super::{engine::CloudNode, queue::Time};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct WorldState {
     /// the current timestamp
-    pub tick: Tick,
+    pub time: Time,
 
     /// the player's current available funds
     pub funds: Money,
@@ -36,11 +36,11 @@ pub struct WorldState {
     /// the op counts of the awesome service
     pub awesome_service: ServiceCounts,
 
-    /// all active clients
-    pub clients: Vec<CloudClientSet>,
+    /// all active client specifications
+    pub user_specs: Vec<CloudUserSpec>,
 
-    /// all active researchers
-    pub researchers: u32,
+    /// all server nodes
+    pub nodes: Vec<CloudNode>,
 
     /// the indices of the cards
     /// (per [`ALL_CARDS`](crate::central::cards::ALL_CARDS))
@@ -49,10 +49,28 @@ pub struct WorldState {
     pub cards_used: Vec<UsedCard>,
 }
 
+impl WorldState {
+    /// convenience method to retrieve a cloud node by id
+    pub fn node(&self, id: u32) -> Option<&CloudNode> {
+        self.nodes
+            .binary_search_by_key(&id, |node| node.id)
+            .ok()
+            .map(|index| &self.nodes[index])
+    }
+
+    /// convenience method to retrieve a cloud node by id
+    pub fn node_mut(&mut self, id: u32) -> Option<&mut CloudNode> {
+        self.nodes
+            .binary_search_by_key(&id, |node| node.id)
+            .ok()
+            .map(|index| &mut self.nodes[index])
+    }
+}
+
 impl Default for WorldState {
     fn default() -> Self {
         Self {
-            tick: 0,
+            time: 0,
             funds: Default::default(),
             spent: Default::default(),
             demand: 0.0,
@@ -61,8 +79,8 @@ impl Default for WorldState {
             epic_service: Default::default(),
             requests_dropped: 0,
             awesome_service: Default::default(),
-            clients: Default::default(),
-            researchers: 0,
+            nodes: vec![CloudNode::new(0)],
+            user_specs: Default::default(),
             cards_used: Default::default(),
         }
     }
@@ -71,7 +89,7 @@ impl Default for WorldState {
 #[derive(Debug, Clone, PartialEq)]
 pub struct UsedCard {
     pub index: usize,
-    pub tick: Tick,
+    pub time: Time,
 }
 
 #[derive(Debug, Default, Copy, Clone, PartialEq)]

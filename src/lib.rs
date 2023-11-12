@@ -11,8 +11,9 @@ use rand::SeedableRng;
 use rand_distr::Distribution;
 use rand_pcg::Pcg32;
 
-pub use crate::central::cloud_user::CloudClientSpec;
-pub use crate::central::queue::Tick;
+pub use crate::central::action::UserAction;
+pub use crate::central::cloud_user::CloudUserSpec;
+pub use crate::central::queue::Time;
 pub use crate::central::state::WorldState;
 pub use crate::central::stuff::{Cost, Memory, Money, Ops, ServiceKind};
 
@@ -20,6 +21,9 @@ pub use crate::central::stuff::{Cost, Memory, Money, Ops, ServiceKind};
 pub const MILLISECONDS_PER_CYCLE: u32 = 50;
 // how many in-game ticks advance per interval cycle
 pub const TICKS_PER_CYCLE: u32 = 5;
+
+/// how many time units are in a single millisecond
+pub const TIME_UNITS_PER_MILLISECOND: u32 = 10;
 
 /// The time watch service, emits ticks at a fixed interval when started.
 pub struct GameWatch {
@@ -52,30 +56,31 @@ impl GameWatch {
     }
 }
 
-/// Game construct that produces events over game time.
+/// Game construct that produces timed events on demand.
 #[derive(Debug)]
-pub struct EventReactor {
+pub struct EventGenerator {
     /// the random number generator
     rng: Pcg32,
 }
 
-impl EventReactor {
+impl EventGenerator {
     pub fn new() -> Self {
-        EventReactor {
+        EventGenerator {
             rng: Pcg32::from_entropy(),
         }
     }
 
     /// Sample when the next request to cloud service is going to be made
     /// based on the given demand for that service.
-    pub fn next_request(&mut self, base_demand: f32, multiplier: f32) -> f32 {
-        let lambda = base_demand * multiplier;
-        let distribution = rand_distr::Exp::new(lambda).unwrap();
-        distribution.sample(&mut self.rng)
+    ///
+    /// Demand is approximately the number of requests per second.
+    pub fn next_request(&mut self, demand: f32) -> Time {
+        let distribution = rand_distr::Exp::new(demand).unwrap();
+        (distribution.sample(&mut self.rng) * 1_000. * TIME_UNITS_PER_MILLISECOND as f32) as Time
     }
 }
 
-impl Default for EventReactor {
+impl Default for EventGenerator {
     fn default() -> Self {
         Self::new()
     }

@@ -1,6 +1,4 @@
-use crate::{
-    CloudClientSpec, Cost, Money, Ops, WorldState, MILLISECONDS_PER_CYCLE, TICKS_PER_CYCLE,
-};
+use crate::{CloudUserSpec, Cost, Money, Ops, WorldState, TIME_UNITS_PER_MILLISECOND};
 
 use super::stuff::ServiceKind;
 
@@ -44,12 +42,12 @@ pub enum CardCondition {
     AvailableAwesomeOps(Ops),
 
     /// appear N ticks after another card has been used
-    TicksAfterCard {
+    TimeAfterCard {
         /// the card index
         card: usize,
-        /// the number of ticks after the card
+        /// the time after a card was used
         /// at which this card should appear
-        ticks: u32,
+        duration: u32,
     },
 }
 
@@ -61,9 +59,9 @@ impl CardCondition {
     /// appear approximately N milliseconds
     /// after the player uses a card
     pub const fn after_card_millis(card_index: usize, millis: u32) -> Self {
-        Self::TicksAfterCard {
+        Self::TimeAfterCard {
             card: card_index,
-            ticks: millis / TICKS_PER_CYCLE / MILLISECONDS_PER_CYCLE,
+            duration: millis / TIME_UNITS_PER_MILLISECOND,
         }
     }
 
@@ -82,7 +80,7 @@ impl CardCondition {
             Self::AvailableEpicOps(ops) => state.epic_service.available >= *ops,
             Self::TotalAwesomeOps(ops) => state.awesome_service.total >= *ops,
             Self::AvailableAwesomeOps(ops) => state.awesome_service.available >= *ops,
-            Self::TicksAfterCard { card, ticks } => {
+            Self::TimeAfterCard { card, duration } => {
                 match state
                     .cards_used
                     .binary_search_by_key(&card, |used_card| &used_card.index)
@@ -90,7 +88,7 @@ impl CardCondition {
                     Err(_) => false,
                     Ok(index) => {
                         let used_card = &state.cards_used[index];
-                        used_card.tick + *ticks as u64 <= state.tick
+                        used_card.time + *duration as u64 <= state.time
                     }
                 }
             }
@@ -109,5 +107,5 @@ pub enum CardEffect {
     /// Add or remove funds
     AddFunds(Money),
     /// Add cloud clients with the given specification
-    AddClients(CloudClientSpec),
+    AddClients(CloudUserSpec),
 }
