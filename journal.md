@@ -58,3 +58,12 @@ Added state, engine, and watch to playground,
 added preliminary logic to apply player actions
 and apply card effects.
 Refactored business and total stats component.
+
+## Day 8: 2023-11-14
+
+Continued extending card effects and conditions.
+Added state serialization.
+Tweaked card functioning stuff, including the use of strings to identify cards.
+Added more properties to cloud services.
+Used global card registry to playground,
+making it closer to how the main game will work.
