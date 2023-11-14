@@ -2,6 +2,8 @@
 //! for the game.
 use std::fmt;
 
+use serde::{Deserialize, Serialize};
+
 use crate::display::Separating;
 
 #[derive(Debug, Default, Clone, PartialEq)]
@@ -152,7 +154,10 @@ impl fmt::Display for Cost {
 }
 
 /// Money, with precision down to the 1000th of a cent.
-#[derive(Debug, Default, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(
+    Debug, Default, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize,
+)]
+#[serde(transparent)]
 pub struct Money(i64);
 
 impl Money {
@@ -262,7 +267,10 @@ impl fmt::Display for Money {
 }
 
 /// A count of cloud service operations
-#[derive(Debug, Default, Copy, Clone, PartialEq, Eq, Hash, Ord, PartialOrd)]
+#[derive(
+    Debug, Default, Copy, Clone, PartialEq, Eq, Hash, Ord, PartialOrd, Serialize, Deserialize,
+)]
+#[serde(transparent)]
 pub struct Ops(pub i64);
 
 impl From<i32> for Ops {
@@ -348,7 +356,8 @@ impl Ops {
 }
 
 /// A memory amounts
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, Ord, PartialOrd)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, Ord, PartialOrd, Serialize, Deserialize)]
+#[serde(transparent)]
 pub struct Memory(i64);
 
 impl Memory {
@@ -459,7 +468,7 @@ impl fmt::Display for Memory {
     }
 }
 
-#[derive(Debug, Copy, Clone, PartialEq)]
+#[derive(Debug, Copy, Clone, PartialEq, Serialize, Deserialize)]
 pub enum ServiceKind {
     Base,
     Super,

@@ -1,11 +1,13 @@
 //! module for Cloud users (clients and researchers)
 
+use serde::{Deserialize, Serialize};
+
 use crate::Time;
 
 use super::stuff::ServiceKind;
 
 /// The behavioral specification for a cloud user.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct CloudUserSpec {
     /// a base multiplier for users following this specification
     pub amount: u32,
@@ -36,7 +38,7 @@ impl Default for CloudUserSpec {
 }
 
 /// The non-live behavioral specification for a cloud client.
-/// 
+///
 /// It is different from CloudUserSpec because it is never evil
 /// and trial time is specified as a duration instead of a timestamp.
 #[derive(Debug, Clone, PartialEq)]

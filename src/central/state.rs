@@ -1,11 +1,15 @@
 //! Module for the full game state
 //!
 
+use std::borrow::Cow;
+
+use serde::{Deserialize, Serialize};
+
 use crate::{CloudUserSpec, Cost, Money, Ops, ServiceKind};
 
 use super::{engine::CloudNode, queue::Time};
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct WorldState {
     /// the current timestamp
     pub time: Time,
@@ -107,9 +111,9 @@ impl Default for WorldState {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct UsedCard {
-    pub index: usize,
+    pub id: Cow<'static, str>,
     pub time: Time,
 }
 
@@ -117,7 +121,7 @@ pub struct UsedCard {
 /// namely the current price per op,
 /// how many ops are available to spend,
 /// how many ops were performed in total.
-#[derive(Debug, Default, Copy, Clone, PartialEq)]
+#[derive(Debug, Default, Copy, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ServiceInfo {
     /// the price per op
     pub price: Money,
