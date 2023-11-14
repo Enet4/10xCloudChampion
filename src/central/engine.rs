@@ -4,11 +4,14 @@
 
 use std::collections::VecDeque;
 
+use serde::{Deserialize, Serialize};
+
 use crate::{EventGenerator, Memory, Money, UserAction, WorldState};
 
 use super::{
     cards::{all::ALL_CARDS, CardEffect, CardSpec},
     queue::{RequestEvent, RequestEventQueue, RequestEventStage, Time},
+    state::UsedCard,
 };
 
 /// all levels of CPU upgrades
@@ -104,7 +107,6 @@ impl GameEngine {
             UserAction::UpgradeRam { node } => todo!(),
             UserAction::AddNode => todo!(),
             UserAction::UseCard { id } => {
-                // TODO
                 // 1. find the card
                 match ALL_CARDS.binary_search_by_key(&id.as_ref(), |c| &c.id) {
                     Ok(index) => {
@@ -113,6 +115,11 @@ impl GameEngine {
                         if self.apply_card(state, card) {
                             // 3. add the card to the used cards list
                             // (but only if the card was actually applied)
+                            let time = state.time;
+                            state.cards_used.push(UsedCard {
+                                id: id.clone(),
+                                time,
+                            });
                         }
                     }
                     Err(_) => {
@@ -133,13 +140,23 @@ impl GameEngine {
         }
 
         match effect {
-            CardEffect::PublishService(_) => todo!(),
-            CardEffect::UnlockService(_) => todo!(),
+            CardEffect::Nothing => { /* no op */ }
+            CardEffect::PublishService(kind) => {
+                let service = state.service_by_kind_mut(*kind);
+                service.private = false;
+            }
+            CardEffect::UnlockService(kind) => todo!(),
             CardEffect::AddFunds(money) => {
                 state.funds += *money;
             }
             CardEffect::AddClients(_) => todo!(),
-            CardEffect::AddClientsWithPublicity(_, _) => todo!(),
+            CardEffect::AddClientsWithPublicity(specs, demand_delta) => {
+                state.demand += demand_delta;
+                // TODO add clients
+            }
+            CardEffect::AddPublicity(demand_delta) => {
+                state.demand += demand_delta;
+            }
             CardEffect::UpgradeServices => todo!(),
         }
         true
@@ -242,7 +259,7 @@ impl GameEngine {
 }
 
 /// A request (or request set) waiting to be processed in a node.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct WaitingRequest {
     /// multiplier for the number of requests
     /// bundled into one
@@ -253,7 +270,7 @@ pub struct WaitingRequest {
 }
 
 /// A cloud processing node and its state
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct CloudNode {
     /// a unique identifier for the node
     pub id: u32,

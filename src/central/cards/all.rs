@@ -31,7 +31,7 @@ pub static ALL_CARDS: &'static [CardSpec] = &[
         description: "Offer a trial period for your first customer",
         cost: Cost::nothing(),
         condition: CardCondition::TimeAfterCard {
-            card: 0,
+            card: "a0",
             duration: 80,
         },
         effect: CardEffect::AddClientsWithPublicity(
@@ -60,4 +60,35 @@ pub static ALL_CARDS: &'static [CardSpec] = &[
         condition: CardCondition::appear_immediately(),
         effect: CardEffect::UpgradeServices,
     },
+    CardSpec {
+        id: "test-2",
+        title: "YouTube ads",
+        description: "Test adding advertisements",
+        cost: Cost::super_ops(100),
+        condition: CardCondition::appear_immediately(),
+        effect: CardEffect::AddPublicity(20.),
+    },
+    CardSpec {
+        id: "test-3",
+        title: "Unreachable",
+        description: "This one is too expensive",
+        cost: Cost::super_ops(500_000),
+        condition: CardCondition::appear_immediately(),
+        effect: CardEffect::UpgradeServices,
+    },
+    CardSpec {
+        id: "test-4",
+        title: "Wat",
+        description: "This one should not appear",
+        cost: Cost::nothing(),
+        condition: CardCondition::Test { test: false },
+        effect: CardEffect::Nothing,
+    },
 ];
+
+pub fn card_by_id(id: &str) -> Option<&'static CardSpec> {
+    ALL_CARDS
+        .binary_search_by(|c| c.id.cmp(id))
+        .ok()
+        .map(|idx| &ALL_CARDS[idx])
+}

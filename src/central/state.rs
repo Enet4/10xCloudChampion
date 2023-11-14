@@ -89,6 +89,10 @@ impl WorldState {
             && self.epic_service.available >= cost.epic_ops
             && self.awesome_service.available >= cost.awesome_ops
     }
+
+    pub fn is_card_used(&self, card_id: &str) -> bool {
+        self.cards_used.iter().any(|c| c.id == card_id)
+    }
 }
 
 impl Default for WorldState {
@@ -130,4 +134,10 @@ pub struct ServiceInfo {
     pub available: Ops,
     /// the total number of operations performed by the service
     pub total: Ops,
+    /// whether the service has not been unlocked yet
+    pub locked: bool,
+    /// whether the service is still private (true)
+    /// or available for public use (false)
+    #[serde(default)]
+    pub private: bool,
 }

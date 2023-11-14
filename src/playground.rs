@@ -1,3 +1,4 @@
+use cloud_champion::central::cards::all::card_by_id;
 use cloud_champion::central::engine::GameEngine;
 use cloud_champion::components::business::{Business, BusinessProps};
 use cloud_champion::components::hardware::{Node, Power, Rack};
@@ -9,8 +10,8 @@ use cloud_champion::{
 };
 use yew::prelude::*;
 
+use cloud_champion::components::card::*;
 use cloud_champion::components::panel::Panel;
-use cloud_champion::{components::card::*, Cost};
 
 #[derive(Debug)]
 pub(crate) struct Playground {
@@ -88,6 +89,7 @@ impl Component for Playground {
                 price={Money::millicents(50)}
                 on_click={|_| ()}
                 on_price_change={|_| ()}
+                new={true}
                 />
         };
 
@@ -97,6 +99,8 @@ impl Component for Playground {
                 price={Money::cents(2)}
                 on_click={|_| ()}
                 on_price_change={|_| ()}
+                new={true}
+                private={true}
                 />
         };
 
@@ -107,39 +111,37 @@ impl Component for Playground {
             awesome_ops_total: None,
         };
 
-        let mut cards = vec![];
-        let link = ctx.link().clone();
-        cards.push(html! {
-            <Card
-                id="test-0"
-                title="New card"
-                description="A test card to give you a welcoming bonus"
-                cost={Cost::nothing()}
-                on_click={move |_| link.send_message(UserAction::UseCard { id: "test-0".into() }) }
-                />
-        });
+        let test_cards = &[
+            card_by_id("test-0").unwrap(),
+            card_by_id("test-1").unwrap(),
+            card_by_id("test-2").unwrap(),
+            card_by_id("test-3").unwrap(),
+            card_by_id("test-4").unwrap(),
+        ];
 
-        let link = ctx.link().clone();
-        cards.push(html! {
-            <Card
-                id="test-1"
-                title="Powerup"
-                description="Test improving your services"
-                cost={Cost::base_ops(500)}
-                on_click={move |_| link.send_message(UserAction::UseCard { id: "test-1".into() }) }
-                />
-        });
-        let link = ctx.link().clone();
-        cards.push(html! {
-            <Card
-                id="test-2"
-                title="Unreachable"
-                description="This tests a card which can never be reached"
-                cost={Cost::super_ops(100_000)}
-                disabled={true}
-                on_click={move |_| link.send_message(UserAction::UseCard { id: "test-2".into() }) }
-                />
-        });
+        let cards: Html = test_cards.iter()
+            .filter(|card| {
+                // should not be a used card
+                !self.state.is_card_used(card.id)
+                // and condition of appearance is fulfilled
+                    && card.condition.should_appear(&self.state)
+            })
+            .map(|card| {
+                let link = ctx.link().clone();
+                let cost = card.cost.clone();
+                let disabled = !self.state.can_afford(&cost);
+                let id = card.id;
+                html! {
+                    <Card
+                        {id}
+                        title={card.title}
+                        description={card.description}
+                        {cost}
+                        {disabled}
+                        on_click={move |_| link.send_message(UserAction::UseCard { id: id.into() }) }
+                        />
+                }
+            }).collect();
 
         html! {
             <>

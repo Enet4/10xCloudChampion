@@ -45,7 +45,7 @@ pub enum CardCondition {
     /// appear N ticks after another card has been used
     TimeAfterCard {
         /// the card index
-        card: usize,
+        card: &'static str,
         /// the time after a card was used
         /// at which this card should appear
         duration: u32,
@@ -59,9 +59,9 @@ impl CardCondition {
 
     /// appear approximately N milliseconds
     /// after the player uses a card
-    pub const fn after_card_millis(card_index: usize, millis: u32) -> Self {
+    pub const fn after_card_millis(card_id: &'static str, millis: u32) -> Self {
         Self::TimeAfterCard {
-            card: card_index,
+            card: card_id,
             duration: millis / TIME_UNITS_PER_MILLISECOND,
         }
     }
@@ -84,7 +84,7 @@ impl CardCondition {
             Self::TimeAfterCard { card, duration } => {
                 match state
                     .cards_used
-                    .binary_search_by_key(&card, |used_card| &used_card.index)
+                    .binary_search_by(|used_card| used_card.id.as_ref().cmp(*card))
                 {
                     Err(_) => false,
                     Ok(index) => {
@@ -99,6 +99,8 @@ impl CardCondition {
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum CardEffect {
+    /// Might be useful
+    Nothing,
     /// Make the service public,
     /// so that it can be used by customers
     PublishService(ServiceKind),
@@ -110,8 +112,10 @@ pub enum CardEffect {
     /// Add cloud clients with the given specification
     AddClients(CloudClientSpec),
     /// Add cloud clients with the given specification,
-    /// plus increase service demand by the given percentage
+    /// plus increase general service demand by the given percentage
     AddClientsWithPublicity(CloudClientSpec, f32),
+    /// Increase general service demand by the given percentage
+    AddPublicity(f32),
     /// Upgrade software services to the next level
     UpgradeServices,
 }
