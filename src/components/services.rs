@@ -15,6 +15,10 @@ pub struct CloudServiceProps {
     pub on_click: Callback<()>,
     pub on_price_change: Callback<Money>,
     pub price: Money,
+    #[prop_or_default]
+    pub new: bool,
+    #[prop_or_default]
+    pub private: bool,
 }
 
 /// the information to be shown in a cloud service op pop-up
@@ -105,18 +109,30 @@ impl Component for CloudService {
 
         let style = format!("background-color: {color}");
 
+        let button_classes: Classes = if ctx.props().new {
+            classes!("op", "new")
+        } else {
+            classes!("op")
+        };
+
         html! {
             <div class="service" style={style}>
                 <h4>{ name }</h4>
-                <button class="op" onclick={onclick}>{"Op"}</button>
+                <button class={button_classes} onclick={onclick}>{"Op"}</button>
                 // price and buttons to lower/raise
-                <div class="price">
-                    <span>{"Price: "}</span><span class="money">{ctx.props().price.to_string()}</span>
-                </div>
-                <div class="change">
-                    <button>{"lower"}</button>
-                    <button>{"raise"}</button>
-                </div>
+                if ctx.props().private {
+                    <div class="private">
+                        <span>{"TESTING"}</span>
+                    </div>
+                } else {
+                    <div class="price">
+                        <span>{"Price: "}</span><span class="money">{ctx.props().price.to_string()}</span>
+                    </div>
+                    <div class="change">
+                        <button>{"lower"}</button>
+                        <button>{"raise"}</button>
+                    </div>
+                }
                 // pop-ups
                 {
                     self.popups.iter().map(|(k, c)|

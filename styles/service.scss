@@ -25,11 +25,22 @@
         background-color: rgba(256, 256, 256, 0.75);
     }
 
+    button.op.new {
+        // pulsate in color for extra attention
+        animation: pulsate 0.8s ease-out;
+        animation-iteration-count: infinite;
+    }
+
     button.op:active {
         border-style: inset;
         background-color: #ddd;
 
         transform: translateY(2px);
+    }
+
+    /// "TESTING" private service indicator
+    .private {
+        text-align: center;
     }
 
     // service price indicator
@@ -48,6 +59,22 @@
         button {
             width: 2.85rem;
         }
+    }
+}
+
+// pulsate animation
+
+@keyframes pulsate {
+    0% {
+        background-color: rgba(255, 255, 255, 0.95);
+    }
+
+    50% {
+        background-color: rgba(255, 200, 180, 0.95);
+    }
+
+    100% {
+        background-color: rgba(255, 255, 255, 0.95);
     }
 }
 
