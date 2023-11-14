@@ -1,6 +1,6 @@
-use crate::{CloudUserSpec, Cost, Money, Ops, WorldState, TIME_UNITS_PER_MILLISECOND};
-
-use super::stuff::ServiceKind;
+use crate::{
+    CloudClientSpec, Cost, Money, Ops, ServiceKind, WorldState, TIME_UNITS_PER_MILLISECOND,
+};
 
 pub mod all;
 
@@ -108,7 +108,10 @@ pub enum CardEffect {
     /// Add or remove funds
     AddFunds(Money),
     /// Add cloud clients with the given specification
-    AddClients(CloudUserSpec),
+    AddClients(CloudClientSpec),
+    /// Add cloud clients with the given specification,
+    /// plus increase service demand by the given percentage
+    AddClientsWithPublicity(CloudClientSpec, f32),
     /// Upgrade software services to the next level
     UpgradeServices,
 }

@@ -1,10 +1,13 @@
 //! All card entries encoded here
 //!
 
-use crate::{CloudUserSpec, Cost, Money, ServiceKind};
+use crate::{CloudClientSpec, Cost, Money, ServiceKind};
 
 use super::{CardCondition, CardEffect, CardSpec};
 
+/// All project cards in the game.
+///
+/// They _must_ be inserted in id ascending order.
 pub static ALL_CARDS: &'static [CardSpec] = &[
     CardSpec {
         id: "a0",
@@ -15,20 +18,30 @@ pub static ALL_CARDS: &'static [CardSpec] = &[
         effect: CardEffect::PublishService(ServiceKind::Base),
     },
     CardSpec {
-        id: "c1",
+        id: "a1",
+        title: "Clean up trace logs",
+        description: "Improve service performance by 5%",
+        cost: Cost::money(Money::dollars(40)),
+        condition: CardCondition::Funds(Money::dollars(25)),
+        effect: CardEffect::UpgradeServices,
+    },
+    CardSpec {
+        id: "c0",
         title: "First Customer",
         description: "Offer a trial period for your first customer",
         cost: Cost::nothing(),
         condition: CardCondition::TimeAfterCard {
             card: 0,
-            duration: 50,
+            duration: 80,
         },
-        effect: CardEffect::AddClients(CloudUserSpec {
-            amount: 1,
-            service: ServiceKind::Base,
-            trial_time: 100,
-            bad: false,
-        }),
+        effect: CardEffect::AddClientsWithPublicity(
+            CloudClientSpec {
+                amount: 1,
+                service: ServiceKind::Base,
+                trial_duration: 1_000,
+            },
+            1.,
+        ),
     },
     // test cards
     CardSpec {

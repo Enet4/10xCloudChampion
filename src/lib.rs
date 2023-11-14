@@ -12,7 +12,7 @@ use rand_distr::Distribution;
 use rand_pcg::Pcg32;
 
 pub use crate::central::action::UserAction;
-pub use crate::central::cloud_user::CloudUserSpec;
+pub use crate::central::cloud_user::{CloudClientSpec, CloudUserSpec};
 pub use crate::central::queue::Time;
 pub use crate::central::state::WorldState;
 pub use crate::central::stuff::{Cost, Memory, Money, Ops, ServiceKind};

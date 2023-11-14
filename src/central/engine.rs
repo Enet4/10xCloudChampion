@@ -139,6 +139,7 @@ impl GameEngine {
                 state.funds += *money;
             }
             CardEffect::AddClients(_) => todo!(),
+            CardEffect::AddClientsWithPublicity(_, _) => todo!(),
             CardEffect::UpgradeServices => todo!(),
         }
         true
