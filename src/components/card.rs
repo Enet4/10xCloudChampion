@@ -34,7 +34,6 @@ pub fn Card(props: &CardProps) -> Html {
             if let Some(on_click) = &on_click {
                 on_click.emit(());
             }
-            // TODO apply effect?
         })
     };
 
@@ -54,7 +53,7 @@ pub fn Card(props: &CardProps) -> Html {
         <button key={props.id} class={class} disabled={disabled} onclick={on_card_click}>
             <div>
                 <b>{ &props.title }</b>
-                <span class="cost">{cost}</span>
+                {cost}
             </div>
             <p>{ &props.description }</p>
         </button>
