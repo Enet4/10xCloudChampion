@@ -67,3 +67,9 @@ Tweaked card functioning stuff, including the use of strings to identify cards.
 Added more properties to cloud services.
 Used global card registry to playground,
 making it closer to how the main game will work.
+
+## Day 9: 2023-11-15
+
+Added audio, with 2 click sounds.
+Adjusted asset copying on Trunk so that it copies the whole assets dir.
+Added a bit of logic for changing service price.
