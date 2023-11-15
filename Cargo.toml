@@ -21,11 +21,16 @@ playground = []
 getrandom = { version = "0.2.11", features = ["js"] }
 gloo-console = "0.3.0"
 gloo-timers = "0.3.0"
+js-sys = "0.3.65"
 rand = "0.8.5"
 rand_distr = "0.4.3"
 rand_pcg = "0.3.1"
 serde = { version = "1.0.192", features = ["derive", "rc"] }
 serde_json = { version = "1.0.108", features = ["preserve_order"] }
+web-sys = { version = "0.3.65", features = [
+    "HtmlAudioElement",
+    "HtmlMediaElement",
+] }
 yew = { version = "0.21", features = ["csr"] }
 
 [profile.release]

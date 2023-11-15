@@ -3,6 +3,7 @@
 
 use std::borrow::Cow;
 
+use js_sys::wasm_bindgen::JsValue;
 use serde::{Deserialize, Serialize};
 
 use crate::{CloudUserSpec, Cost, Money, Ops, ServiceKind};
@@ -140,4 +141,15 @@ pub struct ServiceInfo {
     /// or available for public use (false)
     #[serde(default)]
     pub private: bool,
+}
+
+/// Gracefully try to obtain the Web local storage API.
+pub fn try_local_storage() -> Result<web_sys::Storage, JsValue> {
+    web_sys::window()
+        .ok_or_else(|| JsValue::from_str("Could not obtain window"))
+        .and_then(|window| {
+            window
+                .local_storage()
+                .and_then(|x| x.ok_or_else(|| JsValue::from_str("Could not obtain local storage")))
+        })
 }

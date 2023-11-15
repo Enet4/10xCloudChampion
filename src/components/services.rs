@@ -7,7 +7,11 @@ use std::collections::VecDeque;
 use gloo_timers::callback::Timeout;
 use yew::prelude::*;
 
-use crate::{components::pop::Pop, Money, ServiceKind};
+use crate::{
+    audio::{play_op_click, play_zip_click},
+    components::pop::Pop,
+    Money, ServiceKind,
+};
 
 #[derive(Debug, PartialEq, Properties)]
 pub struct CloudServiceProps {
@@ -102,9 +106,44 @@ impl Component for CloudService {
             let link = ctx.link().clone();
             let onclick = Callback::from(move |_e: MouseEvent| {
                 on_click.emit(());
+                play_op_click();
                 link.send_message(CloudServiceMessage::New(CountPop { count: 1 }));
             });
             onclick
+        };
+
+        let on_lower_price = {
+            let on_price_change = ctx.props().on_price_change.clone();
+            let price = ctx.props().price;
+            let on_lower_price = Callback::from(move |_e: MouseEvent| {
+                play_zip_click();
+                // based on current price, decide how to lower it
+                let new_price;
+                if price <= Money::zero() {
+                    new_price = Money::zero();
+                } else if price <= Money::millicents(20) {
+                    new_price = price - Money::millicents(1);
+                } else if price <= Money::millicents(200) {
+                    new_price = price - Money::millicents(5);
+                } else if price <= Money::millicents(2_000) {
+                    new_price = price - Money::millicents(100);
+                } else {
+                    new_price = price - Money::cents(1);
+                }
+
+                // TODO call callback
+            });
+            on_lower_price
+        };
+
+        let on_raise_price = {
+            let price = ctx.props().price;
+            let on_price_change = ctx.props().on_price_change.clone();
+            let on_raise_price = Callback::from(move |_e: MouseEvent| {
+                play_zip_click();
+                // TODO based on current price, decide how to raise it
+            });
+            on_raise_price
         };
 
         let style = format!("background-color: {color}");
@@ -129,8 +168,8 @@ impl Component for CloudService {
                         <span>{"Price: "}</span><span class="money">{ctx.props().price.to_string()}</span>
                     </div>
                     <div class="change">
-                        <button>{"lower"}</button>
-                        <button>{"raise"}</button>
+                        <button onclick={on_lower_price}>{"lower"}</button>
+                        <button onclick={on_raise_price}>{"raise"}</button>
                     </div>
                 }
                 // pop-ups

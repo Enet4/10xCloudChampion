@@ -1,21 +1,21 @@
 // add PT Sans font in public/fonts
 @font-face {
     font-family: 'PT Sans Regular';
-    src: url('/PTSans-Regular.ttf') format('truetype');
+    src: url('/assets/fonts/PTSans-Regular.ttf') format('truetype');
     font-weight: normal;
     font-style: normal;
 }
 
 @font-face {
     font-family: 'PT Sans Bold';
-    src: url('/PTSans-Bold.ttf') format('truetype');
+    src: url('/assets/fonts/PTSans-Bold.ttf') format('truetype');
     font-weight: bold;
     font-style: normal;
 }
 
 @font-face {
     font-family: 'PT Sans Italic';
-    src: url('/PTSans-Italic.ttf') format('truetype');
+    src: url('/assets/fonts/PTSans-Italic.ttf') format('truetype');
     font-weight: normal;
     font-style: italic;
 }

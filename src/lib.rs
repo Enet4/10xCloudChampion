@@ -1,5 +1,6 @@
 //! 10x Cloud Champion component library
 
+pub mod audio;
 pub mod central;
 pub mod components;
 pub mod display;

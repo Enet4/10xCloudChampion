@@ -201,11 +201,13 @@ dependencies = [
  "getrandom",
  "gloo-console 0.3.0",
  "gloo-timers 0.3.0",
+ "js-sys",
  "rand",
  "rand_distr",
  "rand_pcg",
  "serde",
  "serde_json",
+ "web-sys",
  "yew",
 ]
 
@@ -589,9 +591,9 @@ checksum = "d77f7ec81a6d05a3abb01ab6eb7590f6083d08449fe5a1c8b1e620283546ccb7"
 
 [[package]]
 name = "http"
-version = "0.2.9"
+version = "0.2.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bd6effc99afb63425aff9b05836f029929e345a6148a14b7ecd5ab67af944482"
+checksum = "8947b1a6fad4393052c7ba1f4cd97bed3e953a95c79c92ad9b051a04611d9fbb"
 dependencies = [
  "bytes",
  "fnv",
@@ -600,11 +602,22 @@ dependencies = [
 
 [[package]]
 name = "implicit-clone"
-version = "0.4.6"
+version = "0.4.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7a50fed6f6aa778e7946f697a88e474b4b4a83fb0849cec1ac65fa8e869319dd"
+checksum = "16c5448a864f9abf124ef8bf2a3cc37eb9fd99fe2e804a8b3235d7357bca2c25"
 dependencies = [
+ "implicit-clone-derive",
  "indexmap",
+]
+
+[[package]]
+name = "implicit-clone-derive"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9311685eb9a34808bbb0608ad2fcab9ae216266beca5848613e95553ac914e3b"
+dependencies = [
+ "quote",
+ "syn 2.0.39",
 ]
 
 [[package]]
