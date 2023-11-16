@@ -73,3 +73,7 @@ making it closer to how the main game will work.
 Added audio, with 2 click sounds.
 Adjusted asset copying on Trunk so that it copies the whole assets dir.
 Added a bit of logic for changing service price.
+
+## Day 10: 2023-11-16
+
+Worked more on the logic for changing service price.
