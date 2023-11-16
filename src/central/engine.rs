@@ -102,6 +102,7 @@ impl GameEngine {
             UserAction::ChangePrice { kind, new_price } => {
                 // change the price and recalculate demand
                 let service = state.service_by_kind_mut(kind);
+                service.price = new_price;
             }
             UserAction::UpgradeCpu { node } => todo!(),
             UserAction::UpgradeRam { node } => todo!(),

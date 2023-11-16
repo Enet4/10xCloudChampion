@@ -74,31 +74,59 @@ impl Component for Playground {
             ..Default::default()
         };
 
+        let on_price_change = {
+            let link = ctx.link().clone();
+            move |new_price: Money| {
+                link.send_message(UserAction::ChangePrice {
+                    kind: ServiceKind::Base,
+                    new_price,
+                });
+            }
+        };
+
         let base_c = html! {
             <CloudService
                 kind={ServiceKind::Base}
-                price={Money::millicents(5)}
+                price={self.state.base_service.price}
                 on_click={|_| ()}
-                on_price_change={|_| ()}
+                {on_price_change}
                 />
         };
 
+        let on_price_change = {
+            let link = ctx.link().clone();
+            move |new_price: Money| {
+                link.send_message(UserAction::ChangePrice {
+                    kind: ServiceKind::Super,
+                    new_price,
+                });
+            }
+        };
         let super_c = html! {
             <CloudService
                 kind={ServiceKind::Super}
-                price={Money::millicents(50)}
+                price={self.state.super_service.price}
                 on_click={|_| ()}
-                on_price_change={|_| ()}
+                {on_price_change}
                 new={true}
                 />
         };
 
+        let on_price_change = {
+            let link = ctx.link().clone();
+            move |new_price: Money| {
+                link.send_message(UserAction::ChangePrice {
+                    kind: ServiceKind::Epic,
+                    new_price,
+                });
+            }
+        };
         let epic_c = html! {
             <CloudService
                 kind={ServiceKind::Epic}
-                price={Money::cents(2)}
+                price={self.state.super_service.price}
                 on_click={|_| ()}
-                on_price_change={|_| ()}
+                {on_price_change}
                 new={true}
                 private={true}
                 />

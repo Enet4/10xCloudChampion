@@ -131,17 +131,33 @@ impl Component for CloudService {
                     new_price = price - Money::cents(1);
                 }
 
-                // TODO call callback
+                on_price_change.emit(new_price);
             });
             on_lower_price
         };
 
         let on_raise_price = {
-            let price = ctx.props().price;
             let on_price_change = ctx.props().on_price_change.clone();
+            let price = ctx.props().price;
             let on_raise_price = Callback::from(move |_e: MouseEvent| {
                 play_zip_click();
-                // TODO based on current price, decide how to raise it
+                // based on current price, decide how to raise it
+                let new_price;
+                if price >= Money::dollars(20) {
+                    new_price = price + Money::dollars(1);
+                } else if price >= Money::dollars(2) {
+                    new_price = price + Money::cents(5);
+                } else if price >= Money::millicents(2_000) {
+                    new_price = price + Money::millicents(100);
+                } else if price >= Money::millicents(200) {
+                    new_price = price + Money::millicents(50);
+                } else if price >= Money::millicents(50) {
+                    new_price = price + Money::millicents(5);
+                } else {
+                    new_price = price + Money::millicents(1);
+                }
+
+                on_price_change.emit(new_price);
             });
             on_raise_price
         };
