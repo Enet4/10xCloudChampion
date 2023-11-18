@@ -12,7 +12,7 @@ use rand::SeedableRng;
 use rand_distr::Distribution;
 use rand_pcg::Pcg32;
 
-pub use crate::central::action::UserAction;
+pub use crate::central::action::PlayerAction;
 pub use crate::central::cloud_user::{CloudClientSpec, CloudUserSpec};
 pub use crate::central::queue::Time;
 pub use crate::central::state::WorldState;
@@ -70,7 +70,7 @@ impl GameWatch {
 #[derive(Debug, Clone, PartialEq)]
 pub enum GameMsg {
     /// the player performed an action
-    Action(UserAction),
+    Action(PlayerAction),
     /// the game watch ticked,
     /// so the game loop should advance
     Tick,
@@ -80,22 +80,22 @@ pub enum GameMsg {
     Resume,
 }
 
-impl From<UserAction> for GameMsg {
-    fn from(action: UserAction) -> Self {
+impl From<PlayerAction> for GameMsg {
+    fn from(action: PlayerAction) -> Self {
         GameMsg::Action(action)
     }
 }
 
 /// Game construct that produces timed events on demand.
 #[derive(Debug)]
-pub struct EventGenerator {
+pub struct SampleGenerator {
     /// the random number generator
     rng: Pcg32,
 }
 
-impl EventGenerator {
+impl SampleGenerator {
     pub fn new() -> Self {
-        EventGenerator {
+        SampleGenerator {
             rng: Pcg32::from_entropy(),
         }
     }
@@ -108,9 +108,14 @@ impl EventGenerator {
         let distribution = rand_distr::Exp::new(demand).unwrap();
         (distribution.sample(&mut self.rng) * 1_000. * TIME_UNITS_PER_MILLISECOND as f32) as Time
     }
+
+    /// Pick a number in the `(low..high)` range (excluding `high`).
+    pub fn gen_range(&mut self, low: u32, high: u32) -> u32 {
+        rand_distr::Uniform::new(low, high).sample(&mut self.rng)
+    }
 }
 
-impl Default for EventGenerator {
+impl Default for SampleGenerator {
     fn default() -> Self {
         Self::new()
     }

@@ -1,5 +1,5 @@
 .power {
-    width: 24rem;
+    width: 26rem;
     border: 1px solid #020202;
     background-color: #dedede;
     padding: 8px;
@@ -42,7 +42,7 @@
 }
 
 .node-container {
-    display: inline-flex;
+    display: flex;
     width: 100%;
     padding-top: 4px;
     padding-left: 2px;
@@ -51,6 +51,8 @@
 
     .node {
         display: inline-block;
+        margin-top: auto;
+        margin-bottom: auto;
         position: relative;
         height: 24px;
         width: 96px;
@@ -75,7 +77,15 @@
             height: 5px;
             border-radius: 10px;
             border: 1px solid #111;
-            animation: led-blink 0.5s step-start infinite;
+        }
+        .led-ok {
+            animation: led-blink-ok 0.5s step-start infinite;
+        }
+        .led-fail {
+            animation: led-blink-problem 0.25s step-start infinite;
+        }
+        .led-powersave {
+            animation: led-blink-powersave 0.75s step-start infinite;
         }
     }
 
@@ -86,6 +96,13 @@
         margin-bottom: auto;
         text-align: center;
         vertical-align: super;
+    }
+    
+    // the container for the upgrade buttons and labels
+    .upgrade-container {
+        display: flex;
+        flex-direction: column;
+        margin-left: auto;
     }
 
     // the buttons to upgrade the equipment
@@ -103,10 +120,28 @@
             text-align: right;
             width: 3.5rem;
         }
+
+        button {
+            width: 7rem;
+        }
     }
 }
 
-@keyframes led-blink {
+@keyframes led-blink-ok {
+    0% {
+        background-color: #0c0;
+    }
+
+    50% {
+        background-color: #000;
+    }
+
+    100% {
+        background-color: #0c0;
+    }
+}
+
+@keyframes led-blink-problem {
     0% {
         background-color: #f00;
     }
@@ -117,6 +152,20 @@
 
     100% {
         background-color: #f00;
+    }
+}
+
+@keyframes led-blink-powersave {
+    0% {
+        background-color: #00f;
+    }
+
+    50% {
+        background-color: #000;
+    }
+
+    100% {
+        background-color: #00f;
     }
 }
 

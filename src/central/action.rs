@@ -6,7 +6,16 @@ use crate::{Cost, Money, ServiceKind};
 
 /// An action that a player can take that affects the game state.
 #[derive(Debug, Clone, PartialEq)]
-pub enum UserAction {
+pub enum PlayerAction {
+    /// Perform a cloud service operation
+    /// by request of the player.
+    OpClick {
+        /// the kind of service that was clicked
+        kind: ServiceKind,
+        /// the number of operations to perform
+        amount: u32,
+    },
+
     /// Sub-action that deducts certain points
     /// from the player's available ops or funds.
     ApplyCost { cost: Cost },

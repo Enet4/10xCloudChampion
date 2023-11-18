@@ -6,7 +6,7 @@ use std::collections::VecDeque;
 
 use serde::{Deserialize, Serialize};
 
-use crate::{EventGenerator, Memory, Money, UserAction, WorldState};
+use crate::{SampleGenerator, Memory, Money, PlayerAction, WorldState, ServiceKind, Ops};
 
 use super::{
     cards::{all::ALL_CARDS, CardEffect, CardSpec},
@@ -70,24 +70,32 @@ pub static AWESOME_MEMORY_RESERVE: Memory = Memory::gb(16);
 pub struct GameEngine {
     /// the event queue
     queue: RequestEventQueue,
-    /// all computational racks
-    racks: Vec<CloudRack>,
-    /// the event generator
-    gen: EventGenerator,
+    /// the number generator
+    gen: SampleGenerator,
 }
 
 impl GameEngine {
     pub fn new() -> Self {
         GameEngine {
             queue: RequestEventQueue::new(),
-            racks: Vec::new(),
-            gen: EventGenerator::new(),
+            gen: SampleGenerator::new(),
         }
     }
 
-    pub fn apply_action(&mut self, state: &mut WorldState, action: UserAction) {
+    pub fn apply_action(&mut self, state: &mut WorldState, action: PlayerAction) {
         match action {
-            UserAction::ApplyCost { cost } => {
+            PlayerAction::OpClick { kind, amount } => {
+                // schedule the operation
+                let time = state.time + 1;
+                self.queue.push(RequestEvent::new_arrived(
+                    time,
+                    None,
+                    amount,
+                    kind,
+                    false,
+                ));
+            }
+            PlayerAction::ApplyCost { cost } => {
                 state.funds -= cost.money;
                 state.base_service.available -= cost.base_ops;
                 state.super_service.available -= cost.super_ops;
@@ -95,19 +103,52 @@ impl GameEngine {
                 state.awesome_service.available -= cost.awesome_ops;
                 state.spent += cost.money;
             }
-            UserAction::Payment { amount } => {
+            PlayerAction::Payment { amount } => {
                 state.funds -= amount;
                 state.spent += amount;
             }
-            UserAction::ChangePrice { kind, new_price } => {
+            PlayerAction::ChangePrice { kind, new_price } => {
                 // change the price and recalculate demand
                 let service = state.service_by_kind_mut(kind);
                 service.price = new_price;
             }
-            UserAction::UpgradeCpu { node } => todo!(),
-            UserAction::UpgradeRam { node } => todo!(),
-            UserAction::AddNode => todo!(),
-            UserAction::UseCard { id } => {
+            PlayerAction::UpgradeCpu { node } => {
+                let funds = state.funds;
+                let node = state.node_mut(node).unwrap();
+                let next_level = node.cpu_level + 1;
+                if next_level as usize >= CPU_LEVELS.len() {
+                    return;
+                }
+                let (num_cores, cpu_speed, cost) = CPU_LEVELS[next_level as usize];
+                if funds < cost {
+                    return;
+                }
+                node.cpu_level = next_level;
+                node.num_cores = num_cores;
+                node.cpu_speed = cpu_speed;
+                state.funds -= cost;
+                state.spent += cost;
+            },
+            PlayerAction::UpgradeRam { node } => {
+                let funds = state.funds;
+                let node = state.node_mut(node).unwrap();
+                let next_level = node.ram_level + 1;
+                if next_level as usize >= RAM_LEVELS.len() {
+                    return;
+                }
+                let (ram_capacity, cost) = RAM_LEVELS[next_level as usize];
+                if funds < cost {
+                    return;
+                }
+                node.ram_level = next_level;
+                node.ram_capacity = ram_capacity;
+                state.funds -= cost;
+                state.spent += cost;
+            },
+            PlayerAction::AddNode => {
+                todo!()
+            },
+            PlayerAction::UseCard { id } => {
                 // 1. find the card
                 match ALL_CARDS.binary_search_by_key(&id.as_ref(), |c| &c.id) {
                     Ok(index) => {
@@ -163,8 +204,40 @@ impl GameEngine {
         true
     }
 
+    /// Initiate request arrival events based on the current world state
+    pub fn bootstrap_events(&mut self, state: &mut WorldState) {
+        for (i, user_spec) in state.user_specs.iter().enumerate() {
+            // calculate demand based on base demand and cloud service price
+            let service = match user_spec.service {
+                crate::ServiceKind::Base => &state.base_service,
+                crate::ServiceKind::Super => &state.super_service,
+                crate::ServiceKind::Epic => &state.epic_service,
+                crate::ServiceKind::Awesome => &state.awesome_service,
+            };
+
+            let demand = service.calculate_demand(state.demand);
+            let duration = self.gen.next_request(demand);
+            let timestamp = duration as u64;
+            self.queue.push(RequestEvent::new_arrived(
+                timestamp,
+                Some(i as u32),
+                user_spec.amount,
+                user_spec.service,
+                user_spec.bad,
+            ));
+        }
+    } 
+
     /// Process the game state and produce new events.
     pub fn update(&mut self, state: &mut WorldState, time: Time) {
+
+        // check whether to do a major update
+        let duration = time - state.time;
+        if duration > 0 && time / 2_500 - state.time / 2_500 > 0 {
+            // do a major update
+            self.update_major(state, time);
+        }
+
         // grab upcoming events
         let mut events = self.queue.events_until(time);
 
@@ -183,6 +256,12 @@ impl GameEngine {
                 break;
             }
         }
+        // update time
+        state.time = time;
+    }
+
+    /// Do a major update, which performs heavier stuff periodically.
+    fn update_major(&mut self, state: &mut WorldState, time: Time) {
     }
 
     /// process a single event
@@ -207,13 +286,21 @@ impl GameEngine {
         match event.kind {
             RequestEventStage::RequestArrived => {
                 // route the request if necessary
-                if self.racks.len() == 1 && self.racks[0].nodes.len() == 1 {
+                let node_count = state.nodes.len() as u32;
+                if node_count == 1 {
                     // immediately route to the only node
                     push_event(event.into_routed(0, 0));
                 } else {
-                    // TODO route the request:
+                    // route the request:
                     // 1. add processing to routing node
+                    let node_num = self.gen.gen_range(0, node_count);
+
+                    let node = state.node_mut(node_num).unwrap();
+                    node.processing += 1;
+                    let duration = node.time_per_request_routing();
+
                     // 2. push event to request routed
+                    push_event(event.into_routed(duration, node_num));
                 }
 
                 if let Some(user_spec_id) = event.user_spec_id {
@@ -221,7 +308,13 @@ impl GameEngine {
                     // from the same client spec
                     if let Some(spec) = &state.user_specs.get(user_spec_id as usize) {
                         // determine demand for the service by this spec
-                        let demand = 1.;
+                        let service = match spec.service {
+                            crate::ServiceKind::Base => &state.base_service,
+                            crate::ServiceKind::Super => &state.super_service,
+                            crate::ServiceKind::Epic => &state.epic_service,
+                            crate::ServiceKind::Awesome => &state.awesome_service,
+                        };
+                        let demand = service.calculate_demand(state.demand);
                         let duration = self.gen.next_request(demand);
                         let timestamp = event.timestamp + duration as u64 * event.amount as u64;
                         push_event(RequestEvent::new_arrived(
@@ -237,23 +330,104 @@ impl GameEngine {
                 }
             }
             RequestEventStage::RequestRouted { node_num } => {
-                // TODO
-                // 1. pick a request processing node
-                // 2. decrement processing on the routing node
-                // 3.1. if not enough memory, drop the request.
-                //      else, add memory usage to the processing node
-                // 4.1. if node has a CPU available,
-                // 4.1.1. then calculate time to process the request
-                //        & increment CPU usage
-                //        & push request processed event to the queue
-                // 4.1.2. else add to waiting queue
-                todo!()
+                let routing_needed = state.nodes.len() > 1;
+                let Some(routing_node) = state.node_mut(node_num) else {
+                    return
+                };
+
+                // 1. decrement processing on the routing node
+                if routing_needed {
+                    routing_node.processing -= 1;
+                }
+                
+                // 2. pick a request processing node
+                let node_id = self.gen.gen_range(0, state.nodes.len() as u32);
+
+                
+                // 3. check memory requirement
+                let node = state.node_mut(node_id).unwrap();
+                let mem_required = node.ram_per_request * event.amount as i32;
+                if mem_required > node.ram_capacity - node.ram_usage {
+                    // 3.1. if not enough memory, drop the request.
+                    state.requests_dropped += event.amount as u64;
+                    return;
+                }
+                // 4. add memory usage to the processing node
+                gloo_console::debug!("Increased memory usage by ", mem_required.to_string());
+                node.ram_usage += mem_required;
+
+                // 5. if node has a CPU available,
+                if node.processing < node.num_cores {
+                    // then calculate time to process the request
+                    let duration = node.time_per_request(event.service) * event.amount;
+                    //  & increment CPU usage
+                    node.processing += 1;
+                    //  & push request processed event to the queue
+                    push_event(event.into_processed(duration, mem_required));
+                } else {
+                    // add to waiting queue
+                    node.requests.push_back(WaitingRequest {
+                        amount: event.amount,
+                        user_spec_id: event.user_spec_id,
+                        service: event.service,
+                        mem_required,
+                    });
+                }
             }
-            RequestEventStage::RequestProcessed { node_num } => {
-                // TODO
-                // 1. decrement processing on the processing node
-                // 2. increment op counts (available & total)
-                // 3. add funds if applicable
+            RequestEventStage::RequestProcessed { node_num, ram_required } => {
+                if state.node(node_num).is_none() {
+                    return
+                };
+                // 1. increment op counts (available & total)
+                let service = state.service_by_kind_mut(event.service);
+                if !event.bad {
+                    service.total += Ops(event.amount as i64);
+                    service.available += Ops(event.amount as i64);
+                }
+
+                // 2. calculate revenue if applicable
+                let revenue = if !event.bad && event.user_spec_id.is_some() {
+                    service.price * event.amount as i32
+                } else {
+                    Money::zero()
+                };
+
+                let node = state.node_mut(node_num).unwrap();
+                // 3. decrement memory usage
+                gloo_console::debug!("Reduced memory usage by ", ram_required.to_string());
+                node.ram_usage -= ram_required;
+
+
+                // 4. if there are requests waiting
+                if !node.requests.is_empty() {
+                    // pop one and schedule a new request processed event
+                    let request = node.requests.pop_front().unwrap();
+                    let duration = node.time_per_request(event.service) * request.amount;
+
+                    let service = request.service;
+                    let bad = if let Some(id) = request.user_spec_id {
+                        state.user_specs[id as usize].bad
+                    } else {
+                        false
+                    };
+                    push_event(RequestEvent {
+                        timestamp: event.timestamp + duration as u64,
+                        user_spec_id: request.user_spec_id,
+                        amount: request.amount,
+                        service,
+                        bad,
+                        kind: RequestEventStage::RequestProcessed { node_num, ram_required }
+                    })
+                } else {
+                    // decrement processing on the processing node
+                    node.processing -= 1;
+                }
+
+                // apply revenue
+                if revenue > Money::zero() {
+                    state.funds += revenue;
+                    state.earned += revenue;
+                }
             }
         }
     }
@@ -265,9 +439,16 @@ pub struct WaitingRequest {
     /// multiplier for the number of requests
     /// bundled into one
     amount: u32,
+    
+    /// the cloud user specification ID
+    /// (or None if it was requested by the player)
+    user_spec_id: Option<u32>,
+
+    /// the request's cloud service kind
+    service: ServiceKind,
 
     /// the amount of memory required to process the request set
-    memory: Memory,
+    mem_required: Memory,
 }
 
 /// A cloud processing node and its state
@@ -294,15 +475,17 @@ pub struct CloudNode {
 
     /// the number of requests currently being processed right now
     pub processing: u32,
-    /// the amount of RAM currently in use
+    /// the total amount of RAM in use
     pub ram_usage: Memory,
+    /// how much of `ram_usage` is reserved
+    pub ram_reserved: Memory,
 
     /// queue of requests sitting in memory and waiting to be processed
     pub requests: VecDeque<WaitingRequest>,
 }
 
 impl CloudNode {
-    pub fn new(id: u32) -> Self {
+    pub fn new(id: u32, ram_reserved: Memory) -> Self {
         Self {
             id,
             cpu_level: 0,
@@ -312,8 +495,40 @@ impl CloudNode {
             cpu_speed: CPU_LEVELS[0].1,
             ram_per_request: Memory::kb(512),
             processing: 0,
-            ram_usage: Memory::zero(),
+            ram_usage: ram_reserved,
+            ram_reserved,
             requests: VecDeque::new(),
+        }
+    }
+
+    pub(crate) fn time_per_request(&self, service: ServiceKind) -> u32 {
+        let factor = match service {
+            ServiceKind::Base => 1,
+            ServiceKind::Super => 2,
+            ServiceKind::Epic => 8,
+            ServiceKind::Awesome => 32,
+        };
+
+        1_000 * factor / self.cpu_speed
+    }
+
+    pub(crate) fn time_per_request_routing(&self) -> u32 {
+        200 / self.cpu_speed
+    }
+
+    pub fn next_cpu_upgrade_cost(&self) -> Option<Money> {
+        if self.cpu_level as usize + 1 < CPU_LEVELS.len() {
+            Some(CPU_LEVELS[self.cpu_level as usize + 1].2)
+        } else {
+            None
+        }
+    }
+
+    pub fn next_ram_upgrade_cost(&self) -> Option<Money> {
+        if self.ram_level as usize + 1 < RAM_LEVELS.len() {
+            Some(RAM_LEVELS[self.ram_level as usize + 1].1)
+        } else {
+            None
         }
     }
 }

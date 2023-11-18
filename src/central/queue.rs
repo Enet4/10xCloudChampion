@@ -3,6 +3,8 @@
 
 use std::collections::VecDeque;
 
+use crate::Memory;
+
 use super::stuff::ServiceKind;
 
 /// type for an absolute time measure.
@@ -31,8 +33,12 @@ pub enum RequestEventStage {
     /// the request (or request set) has been routed to a node
     /// and is now being processed
     RequestRouted { node_num: u32 },
-    /// a node finished processing the request (or request set)
-    RequestProcessed { node_num: u32 },
+    /// a node finished processing the request (or request set),
+    /// and how much RAM in total it was using
+    RequestProcessed {
+        node_num: u32,
+        ram_required: Memory,
+    },
 }
 
 impl RequestEvent {
@@ -61,6 +67,25 @@ impl RequestEvent {
             service: self.service,
             bad: self.bad,
             kind: RequestEventStage::RequestRouted { node_num },
+        }
+    }
+
+    pub fn into_processed(self, duration: u32, ram_required: Memory) -> Self {
+        let node_num = match self.kind {
+            RequestEventStage::RequestRouted { node_num } => node_num,
+            _ => panic!("cannot process a request that has not been routed"),
+        };
+
+        Self {
+            timestamp: self.timestamp + duration as u64,
+            user_spec_id: self.user_spec_id,
+            amount: self.amount,
+            service: self.service,
+            bad: self.bad,
+            kind: RequestEventStage::RequestProcessed {
+                node_num,
+                ram_required,
+            },
         }
     }
 }

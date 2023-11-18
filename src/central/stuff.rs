@@ -188,14 +188,29 @@ impl Money {
 
     /// discard the decimals of cents
     #[inline]
-    pub const fn into_cent(self) -> Self {
-        Self(self.0 / 1_000 * 1_000)
+    pub const fn into_cent_precision(self) -> Self {
+        Self::cents(self.to_cents())
     }
 
     /// discard the decimal part
     #[inline]
-    pub const fn into_dollars(self) -> Self {
-        Self(self.0 / 100_000 * 100_000)
+    pub const fn into_dollar_precision(self) -> Self {
+        Self::dollars(self.to_dollars())
+    }
+
+    #[inline]
+    pub const fn to_cents(self) -> i64 {
+        self.0 / 1_000
+    }
+
+    #[inline]
+    pub const fn to_dollars(self) -> i64 {
+        self.0 / 100_000 * 100_000
+    }
+
+    #[inline]
+    pub const fn to_millicents(self) -> i64 {
+        self.0
     }
 }
 
@@ -380,6 +395,10 @@ impl Memory {
     pub const fn gb(gb: i64) -> Self {
         Self(gb * 1_000_000_000)
     }
+
+    pub fn ratio(self, other: Self) -> f32 {
+        self.0 as f32 / other.0 as f32
+    }
 }
 
 impl From<i32> for Memory {
@@ -402,11 +421,23 @@ impl std::ops::Add for Memory {
     }
 }
 
+impl std::ops::AddAssign for Memory {
+    fn add_assign(&mut self, rhs: Self) {
+        self.0 += rhs.0;
+    }
+}
+
 impl std::ops::Sub for Memory {
     type Output = Self;
 
     fn sub(self, rhs: Self) -> Self::Output {
         Memory(self.0 - rhs.0)
+    }
+}
+
+impl std::ops::SubAssign for Memory {
+    fn sub_assign(&mut self, rhs: Self) {
+        self.0 = self.0.saturating_sub(rhs.0);
     }
 }
 
@@ -515,18 +546,18 @@ mod tests {
     #[test]
     fn test_money() {
         let money = Money::cents(123_456_789);
-        assert_eq!(money.into_cent(), Money::cents(123_456_789));
-        assert_eq!(money.into_dollars(), Money::dollars(1_234_567));
+        assert_eq!(money.into_cent_precision(), Money::cents(123_456_789));
+        assert_eq!(money.into_dollar_precision(), Money::dollars(1_234_567));
         assert_eq!(money.to_string(), "$1\u{2006}234\u{2006}567.89");
 
         let money2 = Money::dollars(9_000);
-        assert_eq!(money2.into_cent(), Money::dollars(9_000));
-        assert_eq!(money2.into_dollars(), Money::dollars(9_000));
+        assert_eq!(money2.into_cent_precision(), Money::dollars(9_000));
+        assert_eq!(money2.into_dollar_precision(), Money::dollars(9_000));
         assert_eq!(money2.to_string(), "$9\u{2006}000");
 
         let money3 = Money::millicents(5);
-        assert_eq!(money3.into_cent(), Money::cents(0));
-        assert_eq!(money3.into_dollars(), Money::dollars(0));
+        assert_eq!(money3.into_cent_precision(), Money::cents(0));
+        assert_eq!(money3.into_dollar_precision(), Money::dollars(0));
         assert_eq!(money3.to_string(), "$0.00005");
 
         let money4 = money2 + money3;

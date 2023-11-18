@@ -37,6 +37,20 @@ pub struct NodeProps {
     pub cpus: u32,
     /// RAM available in the node
     pub ram: Memory,
+    /// the cost for the next CPU upgrade
+    /// (or None if no upgrade is available)
+    pub cpu_upgrade_cost: Option<Money>,
+    /// the cost for the next RAM upgrade
+    /// (or None if no upgrade is available)
+    pub ram_upgrade_cost: Option<Money>,
+    /// whether the CPU upgrade can be afforded
+    pub cpu_upgrade_disabled: bool,
+    /// whether the RAM upgrade can be afforded
+    pub ram_upgrade_disabled: bool,
+    /// callback for when the CPU upgrade button is clicked
+    pub on_cpu_upgrade: Callback<()>,
+    /// callback for when the RAM upgrade button is clicked
+    pub on_ram_upgrade: Callback<()>,
 }
 
 /// A node in the Cloud network
@@ -44,21 +58,47 @@ pub struct NodeProps {
 pub fn Node(props: &NodeProps) -> Html {
     let cores = if props.cpus == 1 { "core" } else { "cores" };
 
-    // TODO pass
-    let upgrade_cost = Money::dollars(500);
+    let on_cpu_upgrade = {
+        let cb = props.on_cpu_upgrade.clone();
+        move |_ev| cb.emit(())
+    };
+    let on_ram_upgrade = {
+        let cb = props.on_ram_upgrade.clone();
+        move |_ev| cb.emit(())
+    };
 
+    let cpu_enabled = if !props.cpu_upgrade_disabled {
+        "true"
+    } else {
+        "false"
+    };
+    let ram_enabled = if !props.ram_upgrade_disabled {
+        "true"
+    } else {
+        "false"
+    };
     html! {
         <div class="node-container">
             <div class="node">
                 // decorative lines
                 <div class="lines" />
                 // blinking light
-                <div class="led" />
+                <div class={classes!["led", "led-ok"]} />
             </div>
             <span class="specs">{props.cpus} {" "} {cores} {", "} {props.ram} {" RAM"}</span>
-            <div class="upgrade">
-                <span>{upgrade_cost.to_string()}</span>
-                <button>{"Upgrade"}</button>
+            <div class="upgrade-container">
+            if let Some(cost) = props.cpu_upgrade_cost {
+                <div class="upgrade">
+                    <span>{cost.to_string()}</span>
+                    <button enabled={cpu_enabled} onclick={on_cpu_upgrade}>{"Upgrade CPU"}</button>
+                </div>
+            }
+            if let Some(cost) = props.ram_upgrade_cost {
+                <div class="upgrade">
+                    <span>{cost.to_string()}</span>
+                    <button enabled={ram_enabled} onclick={on_ram_upgrade}>{"Upgrade RAM"}</button>
+                </div>
+            }
             </div>
         </div>
     }

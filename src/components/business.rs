@@ -55,7 +55,7 @@ pub fn Business(props: &BusinessProps) -> Html {
     html! {
         <div class="business">
             <p>
-                <span>{"Funds: "}</span> {props.funds.into_cent().to_string()} <br/>
+                <span>{"Funds: "}</span> {props.funds.into_cent_precision().to_string()} <br/>
                 <span>{"Available base ops: "}</span> {props.base_ops_available} <br/>
                 {available_ops_to_show}
             </p>
