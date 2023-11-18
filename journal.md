@@ -77,3 +77,11 @@ Added a bit of logic for changing service price.
 ## Day 10: 2023-11-16
 
 Worked more on the logic for changing service price.
+
+## Day 11: 2023-11-18
+
+Finished implementing baseline cloud request handling,
+so that requests arrive based on demand & price
+and that processing them results in goodies.
+Transferred more world state information to playground.
+Implemented node hardware updates.
