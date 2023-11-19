@@ -28,6 +28,16 @@ pub struct BusinessProps {
     #[prop_or_default]
     pub awesome_ops_available: Option<Ops>,
 
+    /// the amount of money to be paid for electricity
+    /// (bill should not appear if the money is below 1 cent)
+    pub electricity_bill: Money,
+
+    /// whether the player can afford to pay the electricity bill
+    pub can_pay_bill: bool,
+
+    /// callback for when the player clicks the "Pay" button
+    pub on_pay_bills: Callback<()>,
+
     /// estimate for the total number of clients using our services
     /// (or `None` if this has not been unlocked yet)
     #[prop_or_default]
@@ -52,6 +62,20 @@ pub fn Business(props: &BusinessProps) -> Html {
     })
     .collect();
 
+    let electricity = if props.electricity_bill >= Money::cents(1) {
+        let onclick = props.on_pay_bills.clone();
+        let onclick = move |_| onclick.emit(());
+        let enabled = if props.can_pay_bill { "true" } else { "false" };
+        html! {
+            <p>
+                <span>{"Electricity bill: "}</span> {props.electricity_bill.into_cent_precision().to_string()}
+                <button {enabled} {onclick}>{"Pay"}</button>
+            </p>
+        }
+    } else {
+        html! {}
+    };
+
     html! {
         <div class="business">
             <p>
@@ -64,6 +88,7 @@ pub fn Business(props: &BusinessProps) -> Html {
                     <><span>{"Clients: "}</span> {count} <br/></>
                 }
             </p>
+            {electricity}
         </div>
     }
 }

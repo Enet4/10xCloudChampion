@@ -26,17 +26,6 @@ impl CloudUserSpec {
     }
 }
 
-impl Default for CloudUserSpec {
-    fn default() -> Self {
-        Self {
-            amount: 1,
-            service: ServiceKind::Base,
-            trial_time: 0,
-            bad: false,
-        }
-    }
-}
-
 /// The non-live behavioral specification for a cloud client.
 ///
 /// It is different from CloudUserSpec because it is never evil

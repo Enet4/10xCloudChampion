@@ -23,7 +23,10 @@ pub enum PlayerAction {
     /// Sub-action that deducts money from the player's balance.
     Payment { amount: Money },
 
-    /// change the price of a cloud service
+    /// Pay the electricity bill.
+    PayElectricityBill,
+
+    /// Change the price of a cloud service.
     ChangePrice { kind: ServiceKind, new_price: Money },
 
     /// Upgrade a node's CPU

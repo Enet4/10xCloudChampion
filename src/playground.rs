@@ -1,13 +1,13 @@
 use cloud_champion::central::cards::all::card_by_id;
-use cloud_champion::central::engine::{GameEngine, CloudNode};
+use cloud_champion::central::engine::{CloudNode, GameEngine};
 use cloud_champion::central::state::ServiceInfo;
 use cloud_champion::components::business::{Business, BusinessProps};
 use cloud_champion::components::hardware::{Node, Power, Rack};
 use cloud_champion::components::services::CloudService;
 use cloud_champion::components::total_stats::{TotalStats, TotalStatsProps};
 use cloud_champion::{
-    GameMsg, GameWatch, Memory, Money, Ops, ServiceKind, PlayerAction, WorldState,
-    TIME_UNITS_PER_TICK, CloudUserSpec,
+    CloudUserSpec, GameMsg, GameWatch, Memory, Money, Ops, PlayerAction, ServiceKind, WorldState,
+    TIME_UNITS_PER_TICK,
 };
 use yew::prelude::*;
 
@@ -49,16 +49,20 @@ impl Component for Playground {
             },
             epic_service: ServiceInfo::new_private(Money::cents(2)),
             awesome_service: ServiceInfo::new_locked(Money::cents(50)),
-            nodes: vec![
-                CloudNode::new(0, Memory::mb(32)),
-            ],
+            nodes: vec![CloudNode::new(0, Memory::mb(32))],
             user_specs: vec![
                 CloudUserSpec {
                     amount: 1,
                     service: ServiceKind::Base,
                     trial_time: 0,
                     bad: false,
-                }
+                },
+                CloudUserSpec {
+                    amount: 1,
+                    service: ServiceKind::Super,
+                    trial_time: 0,
+                    bad: false,
+                },
             ],
             ..Default::default()
         };
@@ -74,7 +78,7 @@ impl Component for Playground {
         let link = ctx.link().clone();
         out.watch
             .start_with(move || link.send_message(GameMsg::Tick));
-        
+
         out.engine.bootstrap_events(&mut out.state);
 
         out
@@ -109,6 +113,7 @@ impl Component for Playground {
         let super_service = &self.state.super_service;
         let epic_service = &self.state.epic_service;
         let awesome_service = &self.state.awesome_service;
+        let electricity_bill = self.state.electricity.total_due.into_cent_precision();
         let business_props = BusinessProps {
             funds: self.state.funds,
             base_ops_available: self.state.base_service.available,
@@ -127,7 +132,14 @@ impl Component for Playground {
             } else {
                 None
             },
-            ..Default::default()
+
+            electricity_bill,
+            can_pay_bill: electricity_bill <= self.state.funds,
+            on_pay_bills: {
+                let link = ctx.link().clone();
+                Callback::from(move |_| link.send_message(PlayerAction::PayElectricityBill))
+            },
+            client_count: None,
         };
 
         let base_c = {
@@ -319,37 +331,42 @@ impl Component for Playground {
         let (cpu_load, mem_load) = self.state.total_processing();
         let mem_total: Memory = self.state.nodes.iter().map(|n| n.ram_capacity).sum();
 
-        let nodes: Html = self.state.nodes.iter().map(|node| {
-            let cpu_upgrade_cost = node.next_cpu_upgrade_cost();
-            let ram_upgrade_cost = node.next_ram_upgrade_cost();
-            let cpu_upgrade_disabled = cpu_upgrade_cost.map(|cost| self.state.funds >= cost).unwrap_or_default();
-            let ram_upgrade_disabled = ram_upgrade_cost.map(|cost| self.state.funds >= cost).unwrap_or_default();
-            let on_cpu_upgrade = {
-                let link = ctx.link().clone();
-                let node = node.id;
-                move |_| {
-                    link.send_message(PlayerAction::UpgradeCpu { node })
+        let nodes: Html = self
+            .state
+            .nodes
+            .iter()
+            .map(|node| {
+                let cpu_upgrade_cost = node.next_cpu_upgrade_cost();
+                let ram_upgrade_cost = node.next_ram_upgrade_cost();
+                let cpu_upgrade_disabled = cpu_upgrade_cost
+                    .map(|cost| self.state.funds >= cost)
+                    .unwrap_or_default();
+                let ram_upgrade_disabled = ram_upgrade_cost
+                    .map(|cost| self.state.funds >= cost)
+                    .unwrap_or_default();
+                let on_cpu_upgrade = {
+                    let link = ctx.link().clone();
+                    let node = node.id;
+                    move |_| link.send_message(PlayerAction::UpgradeCpu { node })
+                };
+                let on_ram_upgrade = {
+                    let link = ctx.link().clone();
+                    let node = node.id;
+                    move |_| link.send_message(PlayerAction::UpgradeRam { node })
+                };
+                html! {
+                    <Node
+                        cpus={node.num_cores} ram={Memory::mb(256)}
+                        {cpu_upgrade_cost}
+                        {ram_upgrade_cost}
+                        {cpu_upgrade_disabled}
+                        {ram_upgrade_disabled}
+                        {on_cpu_upgrade}
+                        {on_ram_upgrade}
+                        />
                 }
-            };
-            let on_ram_upgrade = {
-                let link = ctx.link().clone();
-                let node = node.id;
-                move |_| {
-                    link.send_message(PlayerAction::UpgradeRam { node })
-                }
-            };
-            html! {
-                <Node
-                    cpus={node.num_cores} ram={Memory::mb(256)}
-                    {cpu_upgrade_cost}
-                    {ram_upgrade_cost}
-                    {cpu_upgrade_disabled}
-                    {ram_upgrade_disabled}
-                    {on_cpu_upgrade}
-                    {on_ram_upgrade}
-                    />
-            }
-        }).collect();
+            })
+            .collect();
 
         html! {
             <>

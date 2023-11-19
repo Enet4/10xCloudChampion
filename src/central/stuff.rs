@@ -250,6 +250,14 @@ impl std::ops::Mul<i32> for Money {
     }
 }
 
+impl std::ops::Mul<f64> for Money {
+    type Output = Self;
+
+    fn mul(self, rhs: f64) -> Self::Output {
+        Money((self.0 as f64 * rhs) as i64)
+    }
+}
+
 impl std::iter::Sum for Money {
     fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
         iter.fold(Self::zero(), |a, b| a + b)

@@ -104,8 +104,10 @@ pub enum CardEffect {
     /// Make the service public,
     /// so that it can be used by customers
     PublishService(ServiceKind),
-    /// Make the service visible,
-    /// (the base service starts unlocked)
+    /// Make the service visible to the player,
+    /// staying private to customers.
+    ///
+    /// The base service does not need unlocking.
     UnlockService(ServiceKind),
     /// Add or remove funds
     AddFunds(Money),
@@ -114,7 +116,7 @@ pub enum CardEffect {
     /// Add cloud clients with the given specification,
     /// plus increase general service demand by the given percentage
     AddClientsWithPublicity(CloudClientSpec, f32),
-    /// Increase general service demand by the given percentage
+    /// Increase general service demand by the given amount
     AddPublicity(f32),
     /// Upgrade software services to the next level
     UpgradeServices,

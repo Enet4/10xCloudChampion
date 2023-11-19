@@ -6,7 +6,7 @@ use std::borrow::Cow;
 use js_sys::wasm_bindgen::JsValue;
 use serde::{Deserialize, Serialize};
 
-use crate::{CloudUserSpec, Cost, Money, Ops, ServiceKind, Memory};
+use crate::{CloudUserSpec, Cost, Memory, Money, Ops, ServiceKind};
 
 use super::{engine::CloudNode, queue::Time};
 
@@ -53,6 +53,9 @@ pub struct WorldState {
     /// all active client specifications
     pub user_specs: Vec<CloudUserSpec>,
 
+    /// electricity cost, consumption, and due payments
+    pub electricity: Electricity,
+
     /// all server nodes
     pub nodes: Vec<CloudNode>,
 
@@ -63,7 +66,25 @@ pub struct WorldState {
     pub cards_used: Vec<UsedCard>,
 }
 
+const LOCAL_STORAGE_KEY_NAME: &str = "10xCloudChampion_save";
+
 impl WorldState {
+    /// Load the game from local storage.
+    ///
+    /// Returns `Ok(None)` if there is no game save.
+    pub fn load_game() -> Result<Option<Self>, JsValue> {
+        let storage = try_local_storage()?;
+        let json = storage.get_item(LOCAL_STORAGE_KEY_NAME)?;
+        if let Some(json) = json {
+            let state =
+                serde_json::from_str(&json).map_err(|e| JsValue::from_str(&e.to_string()))?;
+            gloo_console::log!("Saved game loaded successfully");
+            Ok(Some(state))
+        } else {
+            Ok(None)
+        }
+    }
+
     /// convenience method to retrieve a cloud node by id
     pub fn node(&self, id: u32) -> Option<&CloudNode> {
         self.nodes
@@ -114,11 +135,22 @@ impl WorldState {
             cpu_capacity += node.num_cores;
             mem_capacity += node.ram_capacity;
         }
-        (
-            cpu as f32 / cpu_capacity as f32,
-            mem.ratio(mem_capacity),
-        )
-    } 
+        (cpu as f32 / cpu_capacity as f32, mem.ratio(mem_capacity))
+    }
+
+    /// Returns `Ok(())` if the game environment can be saved.
+    pub fn can_save_game(&self) -> Result<(), JsValue> {
+        try_local_storage().map(|_| ())
+    }
+
+    /// save the world state to local storage
+    pub fn save_game(&self) -> Result<(), JsValue> {
+        let storage = try_local_storage()?;
+        let json = serde_json::to_string(self).map_err(|e| JsValue::from_str(&e.to_string()))?;
+        storage.set_item(LOCAL_STORAGE_KEY_NAME, &json)?;
+        gloo_console::log!("Game saved");
+        Ok(())
+    }
 }
 
 impl Default for WorldState {
@@ -147,6 +179,7 @@ impl Default for WorldState {
             },
             epic_service: ServiceInfo::new_locked(Money::cents(2)),
             awesome_service: ServiceInfo::new_locked(Money::cents(50)),
+            electricity: Default::default(),
             requests_dropped: 0,
             nodes: vec![CloudNode::new(0, Memory::mb(32))],
             user_specs: Default::default(),
@@ -203,10 +236,10 @@ impl ServiceInfo {
         }
     }
 
-    /// calculate demand based on base demand and cloud service price
+    /// calculate service demand based on base demand and price
     pub fn calculate_demand(&self, base_demand: f32) -> f32 {
         let millicents = (self.price.to_millicents() as f32).max(0.25);
-        base_demand * 1e3 / (millicents * millicents)
+        base_demand * 0.2 + base_demand * 1e3 / (millicents * millicents)
     }
 }
 
@@ -219,4 +252,51 @@ pub fn try_local_storage() -> Result<web_sys::Storage, JsValue> {
                 .local_storage()
                 .and_then(|x| x.ok_or_else(|| JsValue::from_str("Could not obtain local storage")))
         })
+}
+
+/// World state portion for electricity cost, consumption, and due payments.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct Electricity {
+    /// the current electricity cost per Wattever
+    pub cost: Money,
+
+    /// the amount of electricity consumed since the last bill in milliWattever
+    pub consumed: f64,
+
+    /// the total amount of electricity consumed in milliWattever
+    pub total_consumed: f64,
+
+    /// the total amount of electricity payment due
+    pub total_due: Money,
+
+    /// the timestamp of the last bill
+    /// (or 0 if no bills have been issued yet)
+    pub last_bill_time: Time,
+}
+
+impl Electricity {
+    pub fn add_consumption(&mut self, milli_wattever: f64) {
+        self.consumed += milli_wattever;
+        self.total_consumed += milli_wattever;
+    }
+
+    /// emit a bill for the consumed electricity,
+    /// and reset the consumed amount to zero
+    pub fn emit_bill(&mut self) {
+        let total_cost = self.cost * (self.consumed * 1e-3);
+        self.total_due += total_cost;
+        self.consumed = 0.;
+    }
+}
+
+impl Default for Electricity {
+    fn default() -> Self {
+        Self {
+            cost: Money::cents(16),
+            consumed: 0.0,
+            total_consumed: 0.0,
+            total_due: Money::zero(),
+            last_bill_time: 0,
+        }
+    }
 }
