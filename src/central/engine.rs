@@ -70,7 +70,7 @@ pub static AWESOME_MEMORY_RESERVE: Memory = Memory::gb(16);
 pub static DEMAND_DOS_THRESHOLD: f32 = 250.0;
 
 /// time period after which base demand increases a small bit
-pub static INCREASE_DEMAND_PERIOD: u64 = 80_000;
+pub static INCREASE_DEMAND_PERIOD: u64 = 120_000;
 
 /// time period after which the user is given electricity bills to pay
 pub static ELECTRICITY_BILL_PERIOD: u64 = 400_000;
@@ -354,7 +354,7 @@ impl GameEngine {
         // check whether to increase demand from time passing by
         if time / INCREASE_DEMAND_PERIOD - state.time / INCREASE_DEMAND_PERIOD > 0 {
             // increase demand
-            state.demand += 0.25;
+            state.demand += 0.2;
             gloo_console::debug!("Demand increased to ", state.demand);
         }
 
