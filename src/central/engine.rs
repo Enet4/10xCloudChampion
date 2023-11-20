@@ -3,6 +3,7 @@
 //! and processes it over time.
 
 use std::collections::VecDeque;
+use yew::{html::Scope, prelude::*};
 
 use serde::{Deserialize, Serialize};
 
@@ -49,6 +50,23 @@ pub static RAM_LEVELS: [(Memory, Money); 11] = [
     (Memory::gb(64), Money::dollars(8_000)),
 ];
 
+/// All levels of caching,
+/// namely the memory reserve multiplier (0)
+/// and the cache hit rate (1)
+pub static CACHE_LEVELS: [(f32, f32); 5] =
+    [(1., 0.), (1.5, 0.25), (4., 0.5), (10., 0.75), (25., 0.85)];
+
+/// Modifiers for the time to process a request and memory required,
+/// a number between 0 and 1,
+/// where 1 means full cost.
+pub static SOFTWARE_LEVELS: [(f64, f64); 5] = [
+    (1., 1.),
+    (0.9, 0.95),
+    (0.6, 0.75),
+    (0.25, 0.5),
+    (0.03125, 0.125),
+];
+
 /// amount of memory that all each cloud node must reserve
 /// to provide the base cloud service tier,
 /// before modifiers
@@ -70,33 +88,43 @@ pub static AWESOME_MEMORY_RESERVE: Memory = Memory::gb(16);
 pub static DEMAND_DOS_THRESHOLD: f32 = 250.0;
 
 /// time period after which base demand increases a small bit
-pub static INCREASE_DEMAND_PERIOD: u64 = 120_000;
+pub static INCREASE_DEMAND_PERIOD: u64 = 150_000;
 
 /// time period after which the user is given electricity bills to pay
-pub static ELECTRICITY_BILL_PERIOD: u64 = 400_000;
+pub static ELECTRICITY_BILL_PERIOD: u64 = 500_000;
 
 /// time period after which a major update is performed
 /// (also subtle but can do more expensive things)
 pub static MAJOR_UPDATE_PERIOD: u64 = 3_000;
 
 /// time period after which the game is automatically saved to local storage
-pub static GAME_SAVE_PERIOD: u64 = 240_000;
+pub static GAME_SAVE_PERIOD: u64 = 400_000;
 
 /// The main game engine, which processes the game state
 /// and produces new events.
 #[derive(Debug)]
-pub struct GameEngine {
+pub struct GameEngine<C: Component> {
     /// the event queue
     queue: RequestEventQueue,
     /// the number generator
     gen: SampleGenerator,
+    /// link to the main game component's context,
+    /// so that we can send messages back to it
+    link: Scope<C>,
 }
 
-impl GameEngine {
-    pub fn new() -> Self {
+impl<C> GameEngine<C>
+where
+    C: Component,
+{
+    pub fn new(link: Scope<C>) -> Self
+    where
+        C: BaseComponent,
+    {
         GameEngine {
             queue: RequestEventQueue::new(),
             gen: SampleGenerator::new(),
+            link,
         }
     }
 
@@ -107,14 +135,6 @@ impl GameEngine {
                 let time = state.time + 1;
                 self.queue
                     .push(RequestEvent::new_arrived(time, None, amount, kind, false));
-            }
-            PlayerAction::ApplyCost { cost } => {
-                state.funds -= cost.money;
-                state.base_service.available -= cost.base_ops;
-                state.super_service.available -= cost.super_ops;
-                state.epic_service.available -= cost.epic_ops;
-                state.awesome_service.available -= cost.awesome_ops;
-                state.spent += cost.money;
             }
             PlayerAction::Payment { amount } => {
                 state.funds -= amount;
@@ -169,23 +189,30 @@ impl GameEngine {
                 state.spent += cost;
             }
             PlayerAction::AddNode => {
-                todo!()
+                let id = state.nodes.len() as u32;
+                state.nodes.push(CloudNode::new(id));
             }
             PlayerAction::UseCard { id } => {
                 // 1. find the card
                 match ALL_CARDS.binary_search_by_key(&id.as_ref(), |c| &c.id) {
                     Ok(index) => {
                         let card = &ALL_CARDS[index];
-                        // 2. apply the card's effects
-                        if self.apply_card(state, card) {
-                            // 3. add the card to the used cards list
-                            // (but only if the card was actually applied)
-                            let time = state.time;
-                            state.cards_used.push(UsedCard {
-                                id: id.clone(),
-                                time,
-                            });
+                        // 2. deduct its cost
+                        let cost = &card.cost;
+                        if !state.can_afford(cost) {
+                            gloo_console::warn!("Invalid card purchase attempted:", card.id);
+                            return;
                         }
+                        state.apply_cost(cost);
+                        // 3. apply the card's effects
+                        self.apply_card(state, card);
+                        // 4. add the card to the used cards list
+                        // (but only if the card was actually applied)
+                        let time = state.time;
+                        state.cards_used.push(UsedCard {
+                            id: id.clone(),
+                            time,
+                        });
                     }
                     Err(_) => {
                         // warn
@@ -196,14 +223,8 @@ impl GameEngine {
         }
     }
 
-    fn apply_card(&mut self, state: &mut WorldState, card: &CardSpec) -> bool {
+    fn apply_card(&mut self, state: &mut WorldState, card: &CardSpec) {
         let effect = &card.effect;
-        let cost = &card.cost;
-        // check if player can afford the card
-        if !state.can_afford(cost) {
-            return false;
-        }
-
         match effect {
             CardEffect::Nothing => { /* no op */ }
             CardEffect::UnlockService(kind) => {
@@ -240,6 +261,9 @@ impl GameEngine {
                     }
                 }
             }
+            CardEffect::UpgradeOpsPerClick(amount) => {
+                state.ops_per_click = state.ops_per_click.max(*amount);
+            }
             CardEffect::AddFunds(money) => {
                 state.funds += *money;
             }
@@ -254,7 +278,11 @@ impl GameEngine {
                 state.user_specs.push(CloudUserSpec {
                     amount: spec.amount,
                     service: spec.service,
-                    trial_time: state.time + spec.trial_duration as u64,
+                    trial_time: if spec.trial_duration > 0 {
+                        state.time + spec.trial_duration as u64
+                    } else {
+                        0
+                    },
                     bad: false,
                 });
             }
@@ -287,9 +315,20 @@ impl GameEngine {
             }
             CardEffect::UpgradeServices => {
                 state.software_level += 1;
+                // refresh memory reserves
+                // might be reserving too much
+                let maximum_reserve = state.expected_ram_reserved();
+                for node in state.nodes.iter_mut() {
+                    node.release_excess_reserve(maximum_reserve);
+                }
             }
+            CardEffect::MoreCaching => {
+                state.cache_level += 1;
+            }
+            CardEffect::UnlockMultiNodes => todo!(),
+            CardEffect::UnlockMultiRacks => todo!(),
+            CardEffect::UnlockMultiDatacenters => todo!(),
         }
-        true
     }
 
     /// Initiate request arrival events based on the current world state
@@ -354,7 +393,7 @@ impl GameEngine {
         // check whether to increase demand from time passing by
         if time / INCREASE_DEMAND_PERIOD - state.time / INCREASE_DEMAND_PERIOD > 0 {
             // increase demand
-            state.demand += 0.2;
+            state.demand += 0.125;
             gloo_console::debug!("Demand increased to ", state.demand);
         }
 
@@ -373,7 +412,7 @@ impl GameEngine {
         }
     }
 
-    /// process a single event
+    /// process a single request event
     fn process_event(
         &mut self,
         state: &mut WorldState,
@@ -412,40 +451,59 @@ impl GameEngine {
                     push_event(event.into_routed(duration, node_num));
                 }
 
+                let mut should_drop_spec = false;
                 if let Some(user_spec_id) = event.user_spec_id {
                     // also generate a new request for the upcoming request
                     // from the same client spec
                     if let Some(spec) = &state.user_specs.get(user_spec_id as usize) {
-                        // determine demand for the service by this spec
-                        let service = match spec.service {
-                            crate::ServiceKind::Base => &state.base_service,
-                            crate::ServiceKind::Super => &state.super_service,
-                            crate::ServiceKind::Epic => &state.epic_service,
-                            crate::ServiceKind::Awesome => &state.awesome_service,
-                        };
-                        let demand = service.calculate_demand(state.demand);
-                        let duration = self.gen.next_request(demand);
-                        let timestamp = event.timestamp + duration as u64 * event.amount as u64;
-                        push_event(RequestEvent::new_arrived(
-                            timestamp,
-                            event.user_spec_id,
-                            spec.amount,
-                            spec.service,
-                            spec.bad,
-                        ));
+                        // check trial period
+                        if spec.trial_time > time || spec.trial_time == 0 {
+                            // determine demand for the service by this spec
+                            let service = match spec.service {
+                                crate::ServiceKind::Base => &state.base_service,
+                                crate::ServiceKind::Super => &state.super_service,
+                                crate::ServiceKind::Epic => &state.epic_service,
+                                crate::ServiceKind::Awesome => &state.awesome_service,
+                            };
+                            let demand = service.calculate_demand(state.demand);
+                            let duration = self.gen.next_request(demand);
+                            let timestamp = event.timestamp + duration as u64 * event.amount as u64;
+                            push_event(RequestEvent::new_arrived(
+                                timestamp,
+                                event.user_spec_id,
+                                spec.amount,
+                                spec.service,
+                                spec.bad,
+                            ));
+                        } else if spec.trial_time > 0 {
+                            // trial period over
+                            gloo_console::info!(
+                                "Trial period over for user spec ended: ",
+                                user_spec_id
+                            );
+                            should_drop_spec = true;
+                        }
+
+                        if should_drop_spec {
+                            // TODO clean up unused user spec
+                            // (should be done without disrupting existing requests)
+                        }
                     } else {
-                        // warn
+                        gloo_console::warn!("Invalid user specification ID ", user_spec_id);
                     }
                 }
             }
             RequestEventStage::RequestRouted { node_num } => {
                 let software_level = state.software_level;
+                let cache_level = state.cache_level;
                 let routing_needed = state.nodes.len() > 1;
                 let Some(routing_node) = state.node_mut(node_num) else {
                     return;
                 };
 
-                // 1. decrement processing on the routing node
+                // TODO check powersaving mode
+
+                // 1. if required, decrement processing on the routing node
                 if routing_needed {
                     routing_node.processing -= 1;
                     // add small electricity cost
@@ -455,22 +513,44 @@ impl GameEngine {
                 // 2. pick a request processing node
                 let node_id = self.gen.gen_range(0, state.nodes.len() as u32);
 
-                // 3. check memory requirement
+                // 3. check memory reserve requirement
+                let mem_reserve_required = Self::calculate_memory_reserve_required(
+                    event.service,
+                    state.cache_level,
+                    state.software_level,
+                );
                 let node = state.node_mut(node_id).unwrap();
-                let mem_required = node.ram_per_request * event.amount as i32;
-                if mem_required > node.ram_capacity - node.ram_usage {
-                    // 3.1. if not enough memory, drop the request.
+
+                if !node.reserve_for(mem_reserve_required) {
+                    // can't reserve, drop the request
                     state.requests_dropped += event.amount as u64;
                     return;
                 }
-                // 4. add memory usage to the processing node
+
+                // 4. check memory requirement for request
+                let mem_required = node.ram_per_request * event.amount as i32;
+                if mem_required > node.ram_capacity - node.ram_usage {
+                    // 4.1. if not enough memory, drop the request.
+                    state.requests_dropped += event.amount as u64;
+                    return;
+                }
+                // 5. add memory usage to the processing node
                 node.ram_usage += mem_required;
 
-                // 5. if node has a CPU available,
+                // 6. if node has a CPU available,
                 if node.processing < node.num_cores {
-                    // then calculate time to process the request
-                    let duration =
+                    // calculate time to process the request
+                    let mut duration =
                         node.time_per_request(event.service, software_level) * event.amount;
+
+                    // test whether this request will hit the cache
+                    let cache_rate = CACHE_LEVELS[cache_level as usize].1;
+                    let cache_hit = self.gen.gen_bool(cache_rate);
+                    if cache_hit {
+                        // make it much faster
+                        duration = (duration / 20).min(1);
+                    }
+
                     //  & increment CPU usage
                     node.processing += 1;
                     //  & push request processed event to the queue
@@ -503,11 +583,24 @@ impl GameEngine {
                     service.total += Ops(event.amount as i64);
                     service.available += Ops(event.amount as i64);
                 }
+                let service_price = service.price;
 
                 // 3. calculate revenue if applicable
-                let revenue = if !event.bad && event.user_spec_id.is_some() {
-                    service.price * event.amount as i32
+                let revenue = if !event.bad {
+                    if let Some(id) = event.user_spec_id {
+                        let spec = &state.user_specs[id as usize];
+                        if spec.is_paying(time) {
+                            service_price * event.amount as i32
+                        } else {
+                            // within trial period
+                            Money::zero()
+                        }
+                    } else {
+                        // player request
+                        Money::zero()
+                    }
                 } else {
+                    // bad request
                     Money::zero()
                 };
 
@@ -551,6 +644,20 @@ impl GameEngine {
                 }
             }
         }
+    }
+
+    fn calculate_memory_reserve_required(
+        service: ServiceKind,
+        cache_level: u8,
+        software_level: u8,
+    ) -> Memory {
+        (match service {
+            ServiceKind::Base => BASE_MEMORY_RESERVE,
+            ServiceKind::Super => SUPER_MEMORY_RESERVE,
+            ServiceKind::Epic => EPIC_MEMORY_RESERVE,
+            ServiceKind::Awesome => AWESOME_MEMORY_RESERVE,
+        }) * CACHE_LEVELS[cache_level as usize].0
+            * SOFTWARE_LEVELS[software_level as usize].1
     }
 }
 
@@ -606,7 +713,7 @@ pub struct CloudNode {
 }
 
 impl CloudNode {
-    pub fn new(id: u32, ram_reserved: Memory) -> Self {
+    pub fn new(id: u32) -> Self {
         Self {
             id,
             cpu_level: 0,
@@ -616,8 +723,24 @@ impl CloudNode {
             cpu_speed: CPU_LEVELS[0].1,
             ram_per_request: Memory::kb(512),
             processing: 0,
-            ram_usage: ram_reserved,
-            ram_reserved,
+            ram_usage: Memory::zero(),
+            ram_reserved: Memory::zero(),
+            requests: VecDeque::new(),
+        }
+    }
+
+    pub fn new_fully_upgraded(id: u32) -> Self {
+        Self {
+            id,
+            cpu_level: CPU_LEVELS.len() as u8 - 1,
+            ram_level: RAM_LEVELS.len() as u8 - 1,
+            num_cores: CPU_LEVELS[CPU_LEVELS.len() - 1].0,
+            ram_capacity: RAM_LEVELS[RAM_LEVELS.len() - 1].0,
+            cpu_speed: CPU_LEVELS[CPU_LEVELS.len() - 1].1,
+            ram_per_request: Memory::kb(512),
+            processing: 0,
+            ram_usage: Memory::zero(),
+            ram_reserved: Memory::zero(),
             requests: VecDeque::new(),
         }
     }
@@ -653,6 +776,48 @@ impl CloudNode {
             Some(RAM_LEVELS[self.ram_level as usize + 1].1)
         } else {
             None
+        }
+    }
+
+    /// Ensure that the node has enough memory reserved,
+    /// and update `ram_reserved` if possible.
+    ///
+    /// This will not release memory already reserved.
+    ///
+    /// Returns false if the node does not have enough memory,
+    /// in which case no changes are made.
+    pub fn reserve_for(&mut self, memory: Memory) -> bool {
+        let available = self.ram_capacity + self.ram_reserved - self.ram_usage;
+        if available < memory {
+            false
+        } else {
+            if self.ram_reserved < memory {
+                self.release_reserved();
+                self.ram_reserved = memory;
+                self.ram_usage += self.ram_reserved;
+            }
+            true
+        }
+    }
+
+    /// Release reserved memory,
+    /// reclaiming it back as available.
+    pub(crate) fn release_reserved(&mut self) {
+        self.ram_usage -= self.ram_reserved;
+        self.ram_reserved = Memory::zero();
+    }
+
+    /// Release some memory so that
+    /// the node has at most `maximum_reserve` reserved.
+    pub(crate) fn release_excess_reserve(&mut self, maximum_reserve: Memory) -> bool {
+        if self.ram_reserved > maximum_reserve {
+            // check difference
+            let mem_diff = self.ram_reserved - maximum_reserve;
+            self.ram_reserved -= mem_diff;
+            self.ram_usage -= mem_diff;
+            true
+        } else {
+            false
         }
     }
 }

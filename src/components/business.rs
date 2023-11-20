@@ -2,7 +2,7 @@
 //! which shows some metrics about how the cloud management business is going.
 use yew::prelude::*;
 
-use crate::{Money, Ops};
+use crate::{audio::play_zip_click, Money, Ops};
 
 #[derive(Debug, Default, PartialEq, Properties)]
 pub struct BusinessProps {
@@ -64,7 +64,10 @@ pub fn Business(props: &BusinessProps) -> Html {
 
     let electricity = if props.electricity_bill >= Money::cents(1) {
         let onclick = props.on_pay_bills.clone();
-        let onclick = move |_| onclick.emit(());
+        let onclick = move |_| {
+            play_zip_click();
+            onclick.emit(())
+        };
         let enabled = if props.can_pay_bill { "true" } else { "false" };
         html! {
             <p>

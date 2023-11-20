@@ -21,6 +21,7 @@ pub struct Cost {
 
 impl Cost {
     /// Equivalent to `default`, but const
+    #[inline]
     pub const fn nothing() -> Self {
         Self {
             money: Money(0),
@@ -31,6 +32,7 @@ impl Cost {
         }
     }
 
+    #[inline]
     pub const fn money(money: Money) -> Self {
         Self {
             money,
@@ -40,14 +42,18 @@ impl Cost {
             awesome_ops: Ops(0),
         }
     }
+
+    #[inline]
     pub const fn cents(money_cents: i64) -> Self {
         Self::money(Money::cents(money_cents))
     }
 
-    pub const fn dollars(money_cents: i64) -> Self {
-        Self::money(Money::dollars(money_cents))
+    #[inline]
+    pub const fn dollars(money_dollars: i64) -> Self {
+        Self::money(Money::dollars(money_dollars))
     }
 
+    #[inline]
     pub const fn base_ops(base_ops: i32) -> Self {
         Self {
             money: Money(0),
@@ -58,6 +64,7 @@ impl Cost {
         }
     }
 
+    #[inline]
     pub const fn super_ops(super_ops: i32) -> Self {
         Self {
             money: Money(0),
@@ -68,6 +75,7 @@ impl Cost {
         }
     }
 
+    #[inline]
     pub const fn epic_ops(epic_ops: i32) -> Self {
         Self {
             money: Money(0),
@@ -78,6 +86,7 @@ impl Cost {
         }
     }
 
+    #[inline]
     pub const fn awesome_ops(awesome_ops: i32) -> Self {
         Self {
             money: Money(0),
@@ -85,6 +94,18 @@ impl Cost {
             super_ops: Ops(0),
             epic_ops: Ops(0),
             awesome_ops: Ops(awesome_ops as i64),
+        }
+    }
+
+    /// Const method for adding costs together
+    #[inline]
+    pub const fn and(self, cost: Cost) -> Self {
+        Self {
+            money: self.money.plus(cost.money),
+            base_ops: Ops(self.base_ops.0 + cost.base_ops.0),
+            super_ops: Ops(self.super_ops.0 + cost.super_ops.0),
+            epic_ops: Ops(self.epic_ops.0 + cost.epic_ops.0),
+            awesome_ops: Ops(self.awesome_ops.0 + cost.awesome_ops.0),
         }
     }
 
@@ -212,13 +233,18 @@ impl Money {
     pub const fn to_millicents(self) -> i64 {
         self.0
     }
+
+    /// const method to add two money amounts together
+    pub const fn plus(self, other: Self) -> Self {
+        Self(self.0 + other.0)
+    }
 }
 
 impl std::ops::Add for Money {
     type Output = Self;
 
     fn add(self, rhs: Self) -> Self::Output {
-        Money(self.0 + rhs.0)
+        self.plus(rhs)
     }
 }
 
@@ -297,12 +323,14 @@ impl fmt::Display for Money {
 pub struct Ops(pub i64);
 
 impl From<i32> for Ops {
+    #[inline]
     fn from(i: i32) -> Self {
         Ops(i as i64)
     }
 }
 
 impl From<i64> for Ops {
+    #[inline]
     fn from(i: i64) -> Self {
         Ops(i)
     }
@@ -311,8 +339,10 @@ impl From<i64> for Ops {
 impl std::ops::Add for Ops {
     type Output = Self;
 
-    fn add(self, rhs: Self) -> Self::Output {
-        Ops(self.0 + rhs.0)
+    #[inline]
+    fn add(mut self, rhs: Self) -> Self::Output {
+        self += rhs;
+        self
     }
 }
 
@@ -325,14 +355,15 @@ impl std::ops::AddAssign for Ops {
 impl std::ops::Sub for Ops {
     type Output = Self;
 
-    fn sub(self, rhs: Self) -> Self::Output {
-        Ops(self.0 - rhs.0)
+    fn sub(mut self, rhs: Self) -> Self::Output {
+        self -= rhs;
+        self
     }
 }
 
 impl std::ops::SubAssign for Ops {
     fn sub_assign(&mut self, rhs: Self) {
-        self.0 += rhs.0;
+        self.0 -= rhs.0;
     }
 }
 
@@ -384,38 +415,51 @@ impl Ops {
 pub struct Memory(i64);
 
 impl Memory {
+    #[inline]
     pub const fn zero() -> Self {
         Self(0)
     }
 
+    #[inline]
     pub const fn bytes(bytes: i64) -> Self {
         Self(bytes)
     }
 
+    #[inline]
     pub const fn kb(kb: i64) -> Self {
         Self(kb * 1_000)
     }
 
+    #[inline]
     pub const fn mb(mb: i64) -> Self {
         Self(mb * 1_000_000)
     }
 
+    #[inline]
     pub const fn gb(gb: i64) -> Self {
         Self(gb * 1_000_000_000)
     }
 
+    #[inline]
+    pub const fn tb(tb: i64) -> Self {
+        Self(tb * 1_000_000_000_000)
+    }
+
+    #[inline]
     pub fn ratio(self, other: Self) -> f32 {
         self.0 as f32 / other.0 as f32
     }
 }
 
 impl From<i32> for Memory {
+    #[inline]
     fn from(i: i32) -> Self {
         Memory(i as i64)
     }
 }
 
 impl From<i64> for Memory {
+    #[inline]
     fn from(i: i64) -> Self {
         Memory(i)
     }
@@ -424,8 +468,10 @@ impl From<i64> for Memory {
 impl std::ops::Add for Memory {
     type Output = Self;
 
-    fn add(self, rhs: Self) -> Self::Output {
-        Memory(self.0 + rhs.0)
+    #[inline]
+    fn add(mut self, rhs: Self) -> Self::Output {
+        self += rhs;
+        self
     }
 }
 
@@ -462,6 +508,14 @@ impl std::ops::Mul<f32> for Memory {
 
     fn mul(self, rhs: f32) -> Self::Output {
         Memory((self.0 as f32 * rhs) as i64)
+    }
+}
+
+impl std::ops::Mul<f64> for Memory {
+    type Output = Self;
+
+    fn mul(self, rhs: f64) -> Self::Output {
+        Memory((self.0 as f64 * rhs) as i64)
     }
 }
 
@@ -549,7 +603,7 @@ impl ServiceKind {
 
 #[cfg(test)]
 mod tests {
-    use crate::Money;
+    use crate::{Money, Ops};
 
     #[test]
     fn test_money() {
@@ -577,7 +631,28 @@ mod tests {
         assert_eq!(money3.into_dollar_precision(), Money::dollars(0));
         assert_eq!(money3.to_string(), "$0.00005");
 
-        let money4 = money2 + money3;
+        let mut money4 = money2 + money3;
         assert_eq!(money4.to_string(), "$9\u{2006}000.00005");
+
+        money4 -= money2;
+        assert_eq!(money4, money3);
+    }
+
+    #[test]
+    fn test_ops() {
+        let ops1 = Ops(10_000);
+        assert_eq!(ops1.to_string(), "10\u{2006}000");
+        assert_eq!(ops1.compact().to_string(), "10k");
+
+        let ops2 = Ops(2_000_000);
+        assert_eq!(ops2.to_string(), "2\u{2006}000\u{2006}000");
+        assert_eq!(ops2.compact().to_string(), "2M");
+
+        let mut ops3 = ops1 + ops2;
+        assert_eq!(ops3.to_string(), "2\u{2006}010\u{2006}000");
+        assert_eq!(ops3.compact().to_string(), "2\u{2006}010k");
+
+        ops3 -= ops1;
+        assert_eq!(ops3, ops2);
     }
 }

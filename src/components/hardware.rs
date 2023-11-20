@@ -2,7 +2,7 @@
 
 use yew::prelude::*;
 
-use crate::{components::load_bar::LoadBar, Memory, Money};
+use crate::{audio::play_zip_click, components::load_bar::LoadBar, Memory, Money};
 
 #[derive(Debug, PartialEq, Properties)]
 pub struct PowerProps {
@@ -60,11 +60,17 @@ pub fn Node(props: &NodeProps) -> Html {
 
     let on_cpu_upgrade = {
         let cb = props.on_cpu_upgrade.clone();
-        move |_ev| cb.emit(())
+        move |_ev| {
+            play_zip_click();
+            cb.emit(())
+        }
     };
     let on_ram_upgrade = {
         let cb = props.on_ram_upgrade.clone();
-        move |_ev| cb.emit(())
+        move |_ev| {
+            play_zip_click();
+            cb.emit(())
+        }
     };
 
     let cpu_enabled = if !props.cpu_upgrade_disabled {

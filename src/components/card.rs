@@ -13,8 +13,6 @@ pub struct CardProps {
     #[prop_or_default]
     pub disabled: bool,
     #[prop_or_default]
-    pub effect: (),
-    #[prop_or_default]
     pub on_click: Option<Callback<()>>,
 }
 

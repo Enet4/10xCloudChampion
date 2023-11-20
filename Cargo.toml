@@ -33,6 +33,16 @@ web-sys = { version = "0.3.65", features = [
 ] }
 yew = { version = "0.21", features = ["csr"] }
 
+# optimize some dev dependencies for better performance during development
+[profile.dev.package."yew"]
+opt-level = "s"
+
+[profile.dev.package."serde"]
+opt-level = "s"
+
+[profile.dev.package."serde_json"]
+opt-level = "s"
+
 [profile.release]
 panic = 'abort'
 codegen-units = 1

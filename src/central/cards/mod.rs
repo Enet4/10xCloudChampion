@@ -25,6 +25,8 @@ pub enum CardCondition {
     Funds(Money),
     /// the player has spent funds
     Spent(Money),
+    /// the player has earned this much money
+    Earned(Money),
     /// the player has accrued a net total of base ops
     TotalBaseOps(Ops),
     /// the player has accumulated an amount of extra base ops
@@ -73,6 +75,7 @@ impl CardCondition {
             Self::Test { test } => *test,
             Self::Funds(money) => state.funds >= *money,
             Self::Spent(money) => state.spent < *money,
+            Self::Earned(money) => state.earned < *money,
             Self::TotalBaseOps(ops) => state.base_service.total >= *ops,
             Self::AvailableBaseOps(ops) => state.base_service.available >= *ops,
             Self::TotalSuperOps(ops) => state.super_service.total >= *ops,
@@ -118,6 +121,16 @@ pub enum CardEffect {
     AddClientsWithPublicity(CloudClientSpec, f32),
     /// Increase general service demand by the given amount
     AddPublicity(f32),
+    /// Increase the number of operations per player click
+    UpgradeOpsPerClick(u32),
     /// Upgrade software services to the next level
     UpgradeServices,
+    /// Upgrade the software caching level
+    MoreCaching,
+    /// Unlock node purchasing
+    UnlockMultiNodes,
+    /// Unlock rack purchasing
+    UnlockMultiRacks,
+    /// Unlock purchasing of new data center warehouses
+    UnlockMultiDatacenters,
 }

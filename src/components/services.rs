@@ -103,11 +103,9 @@ impl Component for CloudService {
         let on_click = ctx.props().on_click.clone();
 
         let onclick = {
-            let link = ctx.link().clone();
             let onclick = Callback::from(move |_e: MouseEvent| {
-                on_click.emit(());
                 play_op_click();
-                link.send_message(CloudServiceMessage::New(CountPop { count: 1 }));
+                on_click.emit(());
             });
             onclick
         };

@@ -2,7 +2,7 @@
 
 use std::borrow::Cow;
 
-use crate::{Cost, Money, ServiceKind};
+use crate::{Money, ServiceKind};
 
 /// An action that a player can take that affects the game state.
 #[derive(Debug, Clone, PartialEq)]
@@ -15,10 +15,6 @@ pub enum PlayerAction {
         /// the number of operations to perform
         amount: u32,
     },
-
-    /// Sub-action that deducts certain points
-    /// from the player's available ops or funds.
-    ApplyCost { cost: Cost },
 
     /// Sub-action that deducts money from the player's balance.
     Payment { amount: Money },

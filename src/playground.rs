@@ -1,4 +1,4 @@
-use cloud_champion::central::cards::all::card_by_id;
+use cloud_champion::central::cards::all::ALL_CARDS;
 use cloud_champion::central::engine::{CloudNode, GameEngine};
 use cloud_champion::central::state::ServiceInfo;
 use cloud_champion::components::business::{Business, BusinessProps};
@@ -17,7 +17,7 @@ use cloud_champion::components::panel::Panel;
 #[derive(Debug)]
 pub(crate) struct Playground {
     state: WorldState,
-    engine: GameEngine,
+    engine: GameEngine<Playground>,
     watch: GameWatch,
 }
 
@@ -30,7 +30,7 @@ impl Component for Playground {
         let state = WorldState {
             time: 100,
             funds: Money::dollars(50),
-            spent: Money::dollars(10),
+            spent: Money::zero(),
             demand: 1.,
             software_level: 0,
             base_service: ServiceInfo {
@@ -49,7 +49,7 @@ impl Component for Playground {
             },
             epic_service: ServiceInfo::new_private(Money::cents(2)),
             awesome_service: ServiceInfo::new_locked(Money::cents(50)),
-            nodes: vec![CloudNode::new(0, Memory::mb(32))],
+            nodes: vec![CloudNode::new(0)],
             user_specs: vec![
                 CloudUserSpec {
                     amount: 1,
@@ -67,13 +67,12 @@ impl Component for Playground {
             ..Default::default()
         };
 
+        let link = ctx.link().clone();
         let mut out = Self {
             state,
-            engine: GameEngine::new(),
+            engine: GameEngine::new(link),
             watch: GameWatch::new(),
         };
-
-        out.state.funds = Money::dollars(100);
 
         let link = ctx.link().clone();
         out.watch
@@ -265,7 +264,7 @@ impl Component for Playground {
 
             html! {
                 <CloudService
-                    kind={ServiceKind::Epic}
+                    kind={ServiceKind::Awesome}
                     price={epic_service.price}
                     on_click={on_op_click}
                     {on_price_change}
@@ -296,15 +295,10 @@ impl Component for Playground {
             },
         };
 
-        let test_cards = &[
-            card_by_id("test-0").unwrap(),
-            card_by_id("test-1").unwrap(),
-            card_by_id("test-2").unwrap(),
-            card_by_id("test-3").unwrap(),
-            card_by_id("test-4").unwrap(),
-        ];
+        let all_cards = ALL_CARDS;
 
-        let cards: Html = test_cards.iter()
+        let cards: Html = all_cards
+            .iter()
             .filter(|card| {
                 // should not be a used card
                 !self.state.is_card_used(card.id)
@@ -323,10 +317,11 @@ impl Component for Playground {
                         description={card.description}
                         {cost}
                         {disabled}
-                        on_click={move |_| link.send_message(PlayerAction::UseCard { id: id.into() }) }
+                        on_click={move |_| link.send_message(PlayerAction::UseCard { id: id.into() })}
                         />
                 }
-            }).collect();
+            })
+            .collect();
 
         let (cpu_load, mem_load) = self.state.total_processing();
         let mem_total: Memory = self.state.nodes.iter().map(|n| n.ram_capacity).sum();

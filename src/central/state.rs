@@ -8,7 +8,13 @@ use serde::{Deserialize, Serialize};
 
 use crate::{CloudUserSpec, Cost, Memory, Money, Ops, ServiceKind};
 
-use super::{engine::CloudNode, queue::Time};
+use super::{
+    engine::{
+        CloudNode, AWESOME_MEMORY_RESERVE, BASE_MEMORY_RESERVE, EPIC_MEMORY_RESERVE,
+        SOFTWARE_LEVELS, SUPER_MEMORY_RESERVE,
+    },
+    queue::Time,
+};
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct WorldState {
@@ -30,6 +36,10 @@ pub struct WorldState {
 
     /// the number of upgrades done to the cloud service software
     pub software_level: u8,
+
+    /// the number of upgrades done to caching
+    /// (higher means more caching)
+    pub cache_level: u8,
 
     /// number of operation requests performed per player click
     pub ops_per_click: u32,
@@ -151,6 +161,47 @@ impl WorldState {
         gloo_console::log!("Game saved");
         Ok(())
     }
+
+    pub(crate) fn apply_cost(&mut self, cost: &Cost) {
+        self.funds -= cost.money;
+        self.spent += cost.money;
+        self.base_service.available -= cost.base_ops;
+        self.super_service.available -= cost.super_ops;
+        self.epic_service.available -= cost.epic_ops;
+        self.awesome_service.available -= cost.awesome_ops;
+    }
+
+    /// The maximum amount of memory that a cloud node is expected to reserve
+    /// in order to provide all unlocked services.
+    pub(crate) fn expected_ram_reserved(&self) -> Memory {
+        // check highest service tier
+        let base_reserve = match self.service_tier() {
+            ServiceKind::Awesome => AWESOME_MEMORY_RESERVE,
+            ServiceKind::Epic => EPIC_MEMORY_RESERVE,
+            ServiceKind::Super => SUPER_MEMORY_RESERVE,
+            ServiceKind::Base => BASE_MEMORY_RESERVE,
+            _ => unreachable!("base service should not be locked"),
+        };
+
+        // apply factor based on software level
+        let factor = SOFTWARE_LEVELS[self.software_level as usize].1;
+        base_reserve * factor
+    }
+
+    pub(crate) fn service_tier(&self) -> ServiceKind {
+        match (
+            self.base_service.unlocked,
+            self.super_service.unlocked,
+            self.epic_service.unlocked,
+            self.awesome_service.unlocked,
+        ) {
+            (_, _, _, true) => ServiceKind::Awesome,
+            (_, _, true, false) => ServiceKind::Epic,
+            (_, true, false, false) => ServiceKind::Super,
+            (true, false, false, false) => ServiceKind::Base,
+            _ => unreachable!("base service should not be locked"),
+        }
+    }
 }
 
 impl Default for WorldState {
@@ -162,6 +213,7 @@ impl Default for WorldState {
             earned: Default::default(),
             demand: 0.0,
             software_level: 0,
+            cache_level: 0,
             ops_per_click: 1,
             base_service: ServiceInfo {
                 price: Money::dec_cents(1),
@@ -181,7 +233,7 @@ impl Default for WorldState {
             awesome_service: ServiceInfo::new_locked(Money::cents(50)),
             electricity: Default::default(),
             requests_dropped: 0,
-            nodes: vec![CloudNode::new(0, Memory::mb(32))],
+            nodes: vec![CloudNode::new(0)],
             user_specs: Default::default(),
             cards_used: Default::default(),
         }

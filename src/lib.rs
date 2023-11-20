@@ -113,6 +113,11 @@ impl SampleGenerator {
     pub fn gen_range(&mut self, low: u32, high: u32) -> u32 {
         rand_distr::Uniform::new(low, high).sample(&mut self.rng)
     }
+
+    /// Pick `true` with the given probability.
+    pub fn gen_bool(&mut self, chance: f32) -> bool {
+        rand_distr::Uniform::new_inclusive(0., 1.).sample(&mut self.rng) < chance
+    }
 }
 
 impl Default for SampleGenerator {
