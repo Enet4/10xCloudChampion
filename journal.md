@@ -85,3 +85,10 @@ so that requests arrive based on demand & price
 and that processing them results in goodies.
 Transferred more world state information to playground.
 Implemented node hardware updates.
+
+## Day 12: 2023-11-19
+
+Implemented electricity consumption & bills (powersaveing not done yet).
+Readjusted demand and processing time calculations.
+Added periodic game saving and periodic base demand increase over time.
+Implemented untested logic for DoS attacks caused by high demand.
