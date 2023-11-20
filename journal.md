@@ -92,3 +92,12 @@ Implemented electricity consumption & bills (powersaveing not done yet).
 Readjusted demand and processing time calculations.
 Added periodic game saving and periodic base demand increase over time.
 Implemented untested logic for DoS attacks caused by high demand.
+
+## Day 13: 2023-11-20
+
+Implemented more complex memory reserve calculations.
+Implemented caching: more memory reserved per level, but higher cache hit rate.
+Added more card effects, some of them currently stubs.
+Implemented ending user specifications with trial periods.
+Added more cards to the full list.
+Tweaked Cargo manifest to optimize some dependencies in dev mode.
