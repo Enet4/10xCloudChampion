@@ -1,5 +1,6 @@
 #[cfg(not(feature = "playground"))]
 mod app;
+
 #[cfg(feature = "playground")]
 mod playground;
 

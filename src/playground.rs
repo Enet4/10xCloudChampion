@@ -184,7 +184,7 @@ impl Component for Playground {
             };
             let on_op_click = {
                 let link = ctx.link().clone();
-                let amount = self.state.ops_per_click;
+                let amount = (self.state.ops_per_click / 10).min(1);
                 move |_| {
                     link.send_message(PlayerAction::OpClick {
                         kind: ServiceKind::Super,
@@ -218,7 +218,7 @@ impl Component for Playground {
             };
             let on_op_click = {
                 let link = ctx.link().clone();
-                let amount = self.state.ops_per_click;
+                let amount = (self.state.ops_per_click / 50).max(1);
                 move |_| {
                     link.send_message(PlayerAction::OpClick {
                         kind: ServiceKind::Epic,
@@ -253,7 +253,7 @@ impl Component for Playground {
             };
             let on_op_click = {
                 let link = ctx.link().clone();
-                let amount = self.state.ops_per_click;
+                let amount = (self.state.ops_per_click / 1_000).max(1);
                 move |_| {
                     link.send_message(PlayerAction::OpClick {
                         kind: ServiceKind::Awesome,
@@ -264,7 +264,7 @@ impl Component for Playground {
 
             html! {
                 <CloudService
-                    kind={ServiceKind::Awesome}
+                    kind={ServiceKind::Epic}
                     price={epic_service.price}
                     on_click={on_op_click}
                     {on_price_change}
@@ -276,6 +276,7 @@ impl Component for Playground {
             html! {}
         };
 
+        // Total stats header: all op counts
         let total_stats_props = TotalStatsProps {
             base_ops_total: self.state.base_service.total,
             super_ops_total: if super_service.unlocked {
@@ -295,6 +296,7 @@ impl Component for Playground {
             },
         };
 
+        // Projects panel: cards
         let all_cards = ALL_CARDS;
 
         let cards: Html = all_cards
@@ -302,7 +304,7 @@ impl Component for Playground {
             .filter(|card| {
                 // should not be a used card
                 !self.state.is_card_used(card.id)
-                // and condition of appearance is fulfilled
+                // condition of appearance is fulfilled
                     && card.condition.should_appear(&self.state)
             })
             .map(|card| {
@@ -323,6 +325,8 @@ impl Component for Playground {
             })
             .collect();
 
+        // Hardware panel: power stats and cloud nodes
+
         let (cpu_load, mem_load) = self.state.total_processing();
         let mem_total: Memory = self.state.nodes.iter().map(|n| n.ram_capacity).sum();
 
@@ -334,10 +338,10 @@ impl Component for Playground {
                 let cpu_upgrade_cost = node.next_cpu_upgrade_cost();
                 let ram_upgrade_cost = node.next_ram_upgrade_cost();
                 let cpu_upgrade_disabled = cpu_upgrade_cost
-                    .map(|cost| self.state.funds >= cost)
+                    .map(|cost| self.state.funds < cost)
                     .unwrap_or_default();
                 let ram_upgrade_disabled = ram_upgrade_cost
-                    .map(|cost| self.state.funds >= cost)
+                    .map(|cost| self.state.funds < cost)
                     .unwrap_or_default();
                 let on_cpu_upgrade = {
                     let link = ctx.link().clone();

@@ -10,8 +10,8 @@ use crate::{CloudUserSpec, Cost, Memory, Money, Ops, ServiceKind};
 
 use super::{
     engine::{
-        CloudNode, AWESOME_MEMORY_RESERVE, BASE_MEMORY_RESERVE, EPIC_MEMORY_RESERVE,
-        SOFTWARE_LEVELS, SUPER_MEMORY_RESERVE,
+        CloudNode, AWESOME_MEMORY_RESERVE, BASE_MEMORY_RESERVE, ELECTRICITY_COST_LEVELS,
+        EPIC_MEMORY_RESERVE, SOFTWARE_LEVELS, SUPER_MEMORY_RESERVE,
     },
     queue::Time,
 };
@@ -95,6 +95,13 @@ impl WorldState {
         }
     }
 
+    /// Checks whether there is a saved game.
+    pub fn has_saved_game() -> Result<bool, JsValue> {
+        let storage = try_local_storage()?;
+        let item = storage.get_item(LOCAL_STORAGE_KEY_NAME)?;
+        Ok(item.is_some())
+    }
+
     /// convenience method to retrieve a cloud node by id
     pub fn node(&self, id: u32) -> Option<&CloudNode> {
         self.nodes
@@ -149,7 +156,7 @@ impl WorldState {
     }
 
     /// Returns `Ok(())` if the game environment can be saved.
-    pub fn can_save_game(&self) -> Result<(), JsValue> {
+    pub fn can_save_game() -> Result<(), JsValue> {
         try_local_storage().map(|_| ())
     }
 
@@ -160,6 +167,22 @@ impl WorldState {
         storage.set_item(LOCAL_STORAGE_KEY_NAME, &json)?;
         gloo_console::log!("Game saved");
         Ok(())
+    }
+
+    pub(crate) fn user_spec(&self, id: u32) -> Option<&CloudUserSpec> {
+        self.user_specs
+            .binary_search_by_key(&id, |spec| spec.id)
+            .ok()
+            .map(|index| &self.user_specs[index])
+    }
+
+    pub(crate) fn next_user_spec_id(&self) -> u32 {
+        self.user_specs
+            .iter()
+            .map(|spec| spec.id)
+            .max()
+            .unwrap_or(0)
+            + 1
     }
 
     pub(crate) fn apply_cost(&mut self, cost: &Cost) {
@@ -216,7 +239,7 @@ impl Default for WorldState {
             cache_level: 0,
             ops_per_click: 1,
             base_service: ServiceInfo {
-                price: Money::dec_cents(1),
+                price: Money::millicents(50),
                 available: Ops(0),
                 total: Ops(0),
                 unlocked: true,
@@ -229,8 +252,8 @@ impl Default for WorldState {
                 unlocked: false,
                 private: true,
             },
-            epic_service: ServiceInfo::new_locked(Money::cents(2)),
-            awesome_service: ServiceInfo::new_locked(Money::cents(50)),
+            epic_service: ServiceInfo::new_locked(Money::cents(5)),
+            awesome_service: ServiceInfo::new_locked(Money::dollars(1)),
             electricity: Default::default(),
             requests_dropped: 0,
             nodes: vec![CloudNode::new(0)],
@@ -309,8 +332,10 @@ pub fn try_local_storage() -> Result<web_sys::Storage, JsValue> {
 /// World state portion for electricity cost, consumption, and due payments.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Electricity {
-    /// the current electricity cost per Wattever
-    pub cost: Money,
+    /// the current electricity cost level.
+    ///
+    /// Use [`ELECTRICITY_COST_LEVELS`] to translate this to money per Wattever
+    pub cost_level: u8,
 
     /// the amount of electricity consumed since the last bill in milliWattever
     pub consumed: f64,
@@ -335,7 +360,7 @@ impl Electricity {
     /// emit a bill for the consumed electricity,
     /// and reset the consumed amount to zero
     pub fn emit_bill(&mut self) {
-        let total_cost = self.cost * (self.consumed * 1e-3);
+        let total_cost = ELECTRICITY_COST_LEVELS[self.cost_level as usize] * (self.consumed * 1e-3);
         self.total_due += total_cost;
         self.consumed = 0.;
     }
@@ -344,7 +369,7 @@ impl Electricity {
 impl Default for Electricity {
     fn default() -> Self {
         Self {
-            cost: Money::cents(16),
+            cost_level: 0,
             consumed: 0.0,
             total_consumed: 0.0,
             total_due: Money::zero(),

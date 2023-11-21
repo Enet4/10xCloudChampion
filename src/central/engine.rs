@@ -67,6 +67,22 @@ pub static SOFTWARE_LEVELS: [(f64, f64); 5] = [
     (0.03125, 0.125),
 ];
 
+/// The electricity cost in Wattever
+pub static ELECTRICITY_COST_LEVELS: [Money; 6] = [
+    // base cost
+    Money::cents(25),
+    // renegotiate
+    Money::cents(20),
+    // commit to clean power plan
+    Money::cents(8),
+    // dedicated power plant
+    Money::dec_cents(5),
+    // fusion reactor discovery
+    Money::millicents(50),
+    // free energy
+    Money::zero(),
+];
+
 /// amount of memory that all each cloud node must reserve
 /// to provide the base cloud service tier,
 /// before modifiers
@@ -238,6 +254,7 @@ where
                 // add user specification for this service
                 if state.user_specs.iter().all(|spec| spec.service != *kind) {
                     state.user_specs.push(CloudUserSpec {
+                        id: state.next_user_spec_id(),
                         amount: 1,
                         service: *kind,
                         bad: false,
@@ -253,6 +270,7 @@ where
                         .all(|spec| spec.service != *kind && spec.bad)
                     {
                         state.user_specs.push(CloudUserSpec {
+                            id: state.next_user_spec_id(),
                             amount: 1,
                             service: *kind,
                             bad: true,
@@ -261,21 +279,49 @@ where
                     }
                 }
             }
+            CardEffect::SetElectricityCostLevel(level) => {
+                state.electricity.cost_level = state.electricity.cost_level.max(*level);
+            }
             CardEffect::UpgradeOpsPerClick(amount) => {
                 state.ops_per_click = state.ops_per_click.max(*amount);
             }
             CardEffect::AddFunds(money) => {
                 state.funds += *money;
             }
-            CardEffect::AddClients(spec) => state.user_specs.push(CloudUserSpec {
-                amount: spec.amount,
-                service: spec.service,
-                trial_time: state.time + spec.trial_duration as u64,
-                bad: false,
-            }),
+            CardEffect::AddClients(spec) => {
+                state.user_specs.push(CloudUserSpec {
+                    id: state.next_user_spec_id(),
+                    amount: spec.amount,
+                    service: spec.service,
+                    trial_time: state.time + spec.trial_duration as u64,
+                    bad: false,
+                });
+                let user_spec = &state.user_specs[state.user_specs.len() - 1];
+                self.bootstrap_events_for(state, user_spec);
+            }
             CardEffect::AddClientsWithPublicity(spec, demand_delta) => {
                 state.demand += demand_delta;
+
+                // add cloud spec for base service if not added yet
+                // (it means that the game has just started)
+                if state
+                    .user_specs
+                    .iter()
+                    .all(|spec| spec.service != ServiceKind::Base)
+                {
+                    state.user_specs.push(CloudUserSpec {
+                        id: state.next_user_spec_id(),
+                        amount: 1,
+                        service: ServiceKind::Base,
+                        trial_time: 0,
+                        bad: false,
+                    });
+                    let user_spec = &state.user_specs[state.user_specs.len() - 1];
+                    self.bootstrap_events_for(state, user_spec);
+                }
+
                 state.user_specs.push(CloudUserSpec {
+                    id: state.next_user_spec_id(),
                     amount: spec.amount,
                     service: spec.service,
                     trial_time: if spec.trial_duration > 0 {
@@ -285,6 +331,8 @@ where
                     },
                     bad: false,
                 });
+                let user_spec = &state.user_specs[state.user_specs.len() - 1];
+                self.bootstrap_events_for(state, user_spec);
             }
             CardEffect::AddPublicity(demand_delta) => {
                 let was_high_demand = state.demand > DEMAND_DOS_THRESHOLD;
@@ -304,11 +352,14 @@ where
                             .all(|spec| spec.service != service && spec.bad)
                         {
                             state.user_specs.push(CloudUserSpec {
+                                id: state.next_user_spec_id(),
                                 amount: 1,
                                 service,
                                 bad: true,
                                 trial_time: 0,
                             });
+                            let user_spec = &state.user_specs[state.user_specs.len() - 1];
+                            self.bootstrap_events_for(state, user_spec);
                         }
                     }
                 }
@@ -332,7 +383,7 @@ where
     }
 
     /// Initiate request arrival events based on the current world state
-    pub fn bootstrap_events(&mut self, state: &mut WorldState) {
+    pub fn bootstrap_events(&mut self, state: &WorldState) {
         for (i, user_spec) in state.user_specs.iter().enumerate() {
             // calculate demand based on base demand and cloud service price
             let service = match user_spec.service {
@@ -347,12 +398,34 @@ where
             let timestamp = duration as u64;
             self.queue.push(RequestEvent::new_arrived(
                 timestamp,
-                Some(i as u32),
+                Some(user_spec.id),
                 user_spec.amount,
                 user_spec.service,
                 user_spec.bad,
             ));
         }
+    }
+
+    /// Initiate request arrival events for the given cloud user specification
+    pub fn bootstrap_events_for(&mut self, state: &WorldState, user_spec: &CloudUserSpec) {
+        // calculate demand based on base demand and cloud service price
+        let service = match user_spec.service {
+            crate::ServiceKind::Base => &state.base_service,
+            crate::ServiceKind::Super => &state.super_service,
+            crate::ServiceKind::Epic => &state.epic_service,
+            crate::ServiceKind::Awesome => &state.awesome_service,
+        };
+
+        let demand = service.calculate_demand(state.demand);
+        let duration = self.gen.next_request(demand);
+        let timestamp = duration as u64;
+        self.queue.push(RequestEvent::new_arrived(
+            timestamp,
+            Some(user_spec.id),
+            user_spec.amount,
+            user_spec.service,
+            user_spec.bad,
+        ));
     }
 
     /// Process the game state and produce new events.
@@ -455,7 +528,7 @@ where
                 if let Some(user_spec_id) = event.user_spec_id {
                     // also generate a new request for the upcoming request
                     // from the same client spec
-                    if let Some(spec) = &state.user_specs.get(user_spec_id as usize) {
+                    if let Some(spec) = &state.user_spec(user_spec_id) {
                         // check trial period
                         if spec.trial_time > time || spec.trial_time == 0 {
                             // determine demand for the service by this spec
@@ -588,7 +661,7 @@ where
                 // 3. calculate revenue if applicable
                 let revenue = if !event.bad {
                     if let Some(id) = event.user_spec_id {
-                        let spec = &state.user_specs[id as usize];
+                        let spec = &state.user_spec(id).unwrap();
                         if spec.is_paying(time) {
                             service_price * event.amount as i32
                         } else {
@@ -617,7 +690,7 @@ where
 
                     let service = request.service;
                     let bad = if let Some(id) = request.user_spec_id {
-                        state.user_specs[id as usize].bad
+                        state.user_spec(id).unwrap().bad
                     } else {
                         false
                     };

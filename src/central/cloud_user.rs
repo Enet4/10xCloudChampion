@@ -9,6 +9,8 @@ use super::stuff::ServiceKind;
 /// The behavioral specification for a cloud user.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct CloudUserSpec {
+    /// a unique identifier
+    pub id: u32,
     /// a base multiplier for users following this specification
     pub amount: u32,
     /// the service this client will be using

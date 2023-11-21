@@ -75,7 +75,7 @@ impl CardCondition {
             Self::Test { test } => *test,
             Self::Funds(money) => state.funds >= *money,
             Self::Spent(money) => state.spent < *money,
-            Self::Earned(money) => state.earned < *money,
+            Self::Earned(money) => state.earned >= *money,
             Self::TotalBaseOps(ops) => state.base_service.total >= *ops,
             Self::AvailableBaseOps(ops) => state.base_service.available >= *ops,
             Self::TotalSuperOps(ops) => state.super_service.total >= *ops,
@@ -123,6 +123,8 @@ pub enum CardEffect {
     AddPublicity(f32),
     /// Increase the number of operations per player click
     UpgradeOpsPerClick(u32),
+    /// Set the electricity bill level (higher levels mean cheaper electricity)
+    SetElectricityCostLevel(u8),
     /// Upgrade software services to the next level
     UpgradeServices,
     /// Upgrade the software caching level
