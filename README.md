@@ -1,5 +1,7 @@
 # 10x Cloud Champion
 
+[![pr_check](https://github.com/Enet4/10xCloudChampion/actions/workflows/pr_check.yml/badge.svg)](https://github.com/Enet4/10xCloudChampion/actions/workflows/pr_check.yml)
+
 A Cloud computing simulation/clicker game.
 
 ## Setting up
