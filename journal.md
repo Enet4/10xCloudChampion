@@ -101,3 +101,16 @@ Added more card effects, some of them currently stubs.
 Implemented ending user specifications with trial periods.
 Added more cards to the full list.
 Tweaked Cargo manifest to optimize some dependencies in dev mode.
+
+## Day 14: 2023-11-21
+
+Implemented root application & main menu.
+Game now starts in main menu with "New Game" and "Continue" options.
+Added id to CloudUserSpec,
+so that now we query user specifications by this ID
+instead of by vector index,
+which can change.
+Bootstraped events for freshly created specs,
+otherwise they wouldn't do anything.
+Changed electricity cost to cost levels,
+and added card effect to change this level.
