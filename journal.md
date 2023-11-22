@@ -114,3 +114,12 @@ Bootstraped events for freshly created specs,
 otherwise they wouldn't do anything.
 Changed electricity cost to cost levels,
 and added card effect to change this level.
+
+## Day 15: 2023-11-22
+
+Implemented entitlements:
+get money from ops even if you're the one clicking!
+Added many more card specifications.
+Fixed some other issues found in
+request generation and game saving/loading.
+Added CI workflow to deploy the game automatically to GitHub Pages.
