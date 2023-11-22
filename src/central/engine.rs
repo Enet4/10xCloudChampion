@@ -279,6 +279,10 @@ where
                     }
                 }
             }
+            CardEffect::UpgradeEntitlements(service, money) => {
+                let service = state.service_by_kind_mut(*service);
+                service.entitlement = service.entitlement.max(*money);
+            }
             CardEffect::SetElectricityCostLevel(level) => {
                 state.electricity.cost_level = state.electricity.cost_level.max(*level);
             }
@@ -384,7 +388,7 @@ where
 
     /// Initiate request arrival events based on the current world state
     pub fn bootstrap_events(&mut self, state: &WorldState) {
-        for (i, user_spec) in state.user_specs.iter().enumerate() {
+        for user_spec in state.user_specs.iter() {
             // calculate demand based on base demand and cloud service price
             let service = match user_spec.service {
                 crate::ServiceKind::Base => &state.base_service,
@@ -657,20 +661,21 @@ where
                     service.available += Ops(event.amount as i64);
                 }
                 let service_price = service.price;
+                let service_entitlement = service.entitlement;
 
                 // 3. calculate revenue if applicable
                 let revenue = if !event.bad {
                     if let Some(id) = event.user_spec_id {
                         let spec = &state.user_spec(id).unwrap();
                         if spec.is_paying(time) {
-                            service_price * event.amount as i32
+                            service_price * event.amount as i32 + service_entitlement
                         } else {
                             // within trial period
-                            Money::zero()
+                            service_entitlement
                         }
                     } else {
                         // player request
-                        Money::zero()
+                        service_entitlement
                     }
                 } else {
                     // bad request

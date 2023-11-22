@@ -114,6 +114,9 @@ pub enum CardEffect {
     UnlockService(ServiceKind),
     /// Add or remove funds
     AddFunds(Money),
+    /// Change how much extra money you earn per op
+    /// (regardless of who issued it).
+    UpgradeEntitlements(ServiceKind, Money),
     /// Add cloud clients with the given specification
     AddClients(CloudClientSpec),
     /// Add cloud clients with the given specification,

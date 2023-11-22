@@ -203,7 +203,6 @@ impl WorldState {
             ServiceKind::Epic => EPIC_MEMORY_RESERVE,
             ServiceKind::Super => SUPER_MEMORY_RESERVE,
             ServiceKind::Base => BASE_MEMORY_RESERVE,
-            _ => unreachable!("base service should not be locked"),
         };
 
         // apply factor based on software level
@@ -240,18 +239,13 @@ impl Default for WorldState {
             ops_per_click: 1,
             base_service: ServiceInfo {
                 price: Money::millicents(50),
+                entitlement: Money::zero(),
                 available: Ops(0),
                 total: Ops(0),
                 unlocked: true,
                 private: false,
             },
-            super_service: ServiceInfo {
-                price: Money::dec_cents(5),
-                available: Ops(0),
-                total: Ops(0),
-                unlocked: false,
-                private: true,
-            },
+            super_service: ServiceInfo::new_locked(Money::dec_cents(5)),
             epic_service: ServiceInfo::new_locked(Money::cents(5)),
             awesome_service: ServiceInfo::new_locked(Money::dollars(1)),
             electricity: Default::default(),
@@ -277,12 +271,18 @@ pub struct UsedCard {
 pub struct ServiceInfo {
     /// the price per op
     pub price: Money,
+    /// entitlement: money earned per op
+    /// regardless of who issued it
+    /// (except for DoS attacks)
+    #[serde(default)]
+    pub entitlement: Money,
     /// the number of operations that the player has available
     /// from the service
     pub available: Ops,
     /// the total number of operations performed by the service
     pub total: Ops,
     /// whether the service has already been unlocked
+    #[serde(default = "unlocked_default")]
     pub unlocked: bool,
     /// whether the service is still private (true)
     /// or available for public use (false)
@@ -290,10 +290,15 @@ pub struct ServiceInfo {
     pub private: bool,
 }
 
+fn unlocked_default() -> bool {
+    true
+}
+
 impl ServiceInfo {
     pub const fn new_private(price: Money) -> Self {
         Self {
             price,
+            entitlement: Money::zero(),
             available: Ops(0),
             total: Ops(0),
             unlocked: true,
@@ -304,6 +309,7 @@ impl ServiceInfo {
     pub const fn new_locked(price: Money) -> Self {
         Self {
             price,
+            entitlement: Money::zero(),
             available: Ops(0),
             total: Ops(0),
             unlocked: false,
