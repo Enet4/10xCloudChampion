@@ -37,8 +37,10 @@ jobs:
       uses: jetli/trunk-action@v0.1.0
       with:
         version: 'latest'
+    - name: Run tests
+      run: cargo test
     - name: Build
-      run: trunk build --release --public-url=https://enet4.github.io/10xCloudChampion
+      run: trunk build --release --public-url=/10xCloudChampion
     - name: Setup Pages
       uses: actions/configure-pages@v3
     - name: Upload artifact
