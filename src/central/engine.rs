@@ -68,15 +68,19 @@ pub static SOFTWARE_LEVELS: [(f64, f64); 5] = [
 ];
 
 /// The electricity cost in Wattever
-pub static ELECTRICITY_COST_LEVELS: [Money; 6] = [
+pub static ELECTRICITY_COST_LEVELS: [Money; 8] = [
     // base cost
-    Money::cents(25),
+    Money::cents(28),
     // renegotiate
+    Money::cents(25),
+    // repair A/C
     Money::cents(20),
+    // buy solar panels
+    Money::cents(12),
     // commit to clean power plan
-    Money::cents(8),
+    Money::cents(4),
     // dedicated power plant
-    Money::dec_cents(5),
+    Money::dec_cents(10),
     // fusion reactor discovery
     Money::millicents(50),
     // free energy
@@ -107,7 +111,7 @@ pub static DEMAND_DOS_THRESHOLD: f32 = 250.0;
 pub static INCREASE_DEMAND_PERIOD: u64 = 150_000;
 
 /// time period after which the user is given electricity bills to pay
-pub static ELECTRICITY_BILL_PERIOD: u64 = 500_000;
+pub static ELECTRICITY_BILL_PERIOD: u64 = 2_000_000;
 
 /// time period after which a major update is performed
 /// (also subtle but can do more expensive things)
@@ -251,6 +255,13 @@ where
             CardEffect::PublishService(kind) => {
                 let service = state.service_by_kind_mut(*kind);
                 service.private = false;
+
+                // if service is base, add base publicity
+                // (it means that the game has just started)
+                if *kind == ServiceKind::Base {
+                    state.demand = 1.;
+                }
+
                 // add user specification for this service
                 if state.user_specs.iter().all(|spec| spec.service != *kind) {
                     state.user_specs.push(CloudUserSpec {
@@ -260,6 +271,9 @@ where
                         bad: false,
                         trial_time: 0,
                     });
+
+                    let user_spec = &state.user_specs[state.user_specs.len() - 1];
+                    self.bootstrap_events_for(state, user_spec);
                 }
                 // add DoS specification for this service
                 // if there is high demand
@@ -276,6 +290,8 @@ where
                             bad: true,
                             trial_time: 0,
                         });
+                        let user_spec = &state.user_specs[state.user_specs.len() - 1];
+                        self.bootstrap_events_for(state, user_spec);
                     }
                 }
             }
@@ -305,24 +321,6 @@ where
             }
             CardEffect::AddClientsWithPublicity(spec, demand_delta) => {
                 state.demand += demand_delta;
-
-                // add cloud spec for base service if not added yet
-                // (it means that the game has just started)
-                if state
-                    .user_specs
-                    .iter()
-                    .all(|spec| spec.service != ServiceKind::Base)
-                {
-                    state.user_specs.push(CloudUserSpec {
-                        id: state.next_user_spec_id(),
-                        amount: 1,
-                        service: ServiceKind::Base,
-                        trial_time: 0,
-                        bad: false,
-                    });
-                    let user_spec = &state.user_specs[state.user_specs.len() - 1];
-                    self.bootstrap_events_for(state, user_spec);
-                }
 
                 state.user_specs.push(CloudUserSpec {
                     id: state.next_user_spec_id(),
@@ -469,8 +467,10 @@ where
     fn update_major(&mut self, state: &mut WorldState, time: Time) {
         // check whether to increase demand from time passing by
         if time / INCREASE_DEMAND_PERIOD - state.time / INCREASE_DEMAND_PERIOD > 0 {
-            // increase demand
-            state.demand += 0.125;
+            // increase demand if lower than 100
+            if state.demand < 100. {
+                state.demand += 0.125;
+            }
             gloo_console::debug!("Demand increased to ", state.demand);
         }
 
@@ -787,6 +787,7 @@ pub struct CloudNode {
     pub ram_reserved: Memory,
 
     /// queue of requests sitting in memory and waiting to be processed
+    #[serde(skip)]
     pub requests: VecDeque<WaitingRequest>,
 }
 

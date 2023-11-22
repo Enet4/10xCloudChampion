@@ -69,11 +69,30 @@ pub struct WorldState {
     /// all server nodes
     pub nodes: Vec<CloudNode>,
 
+    /// whether the player has unlocked
+    /// buying more cloud nodes
+    #[serde(default, skip_serializing_if = "can_buy_default")]
+    pub can_buy_nodes: bool,
+
+    /// whether the player has unlocked
+    /// buying more cloud racks
+    #[serde(default, skip_serializing_if = "can_buy_default")]
+    pub can_buy_racks: bool,
+
+    /// whether the player has unlocked
+    /// buying more datacenters
+    #[serde(default, skip_serializing_if = "can_buy_default")]
+    pub can_buy_datacenters: bool,
+
     /// the indices of the cards
     /// (per [`ALL_CARDS`](crate::central::cards::ALL_CARDS))
     /// already used,
     /// in used time order
     pub cards_used: Vec<UsedCard>,
+}
+
+fn can_buy_default(&b: &bool) -> bool {
+    !b
 }
 
 const LOCAL_STORAGE_KEY_NAME: &str = "10xCloudChampion_save";
@@ -230,27 +249,23 @@ impl Default for WorldState {
     fn default() -> Self {
         Self {
             time: 0,
-            funds: Default::default(),
+            funds: Money::dollars(10),
             spent: Default::default(),
             earned: Default::default(),
             demand: 0.0,
             software_level: 0,
             cache_level: 0,
             ops_per_click: 1,
-            base_service: ServiceInfo {
-                price: Money::millicents(50),
-                entitlement: Money::zero(),
-                available: Ops(0),
-                total: Ops(0),
-                unlocked: true,
-                private: false,
-            },
+            base_service: ServiceInfo::new_private(Money::millicents(50)),
             super_service: ServiceInfo::new_locked(Money::dec_cents(5)),
             epic_service: ServiceInfo::new_locked(Money::cents(5)),
             awesome_service: ServiceInfo::new_locked(Money::dollars(1)),
             electricity: Default::default(),
             requests_dropped: 0,
             nodes: vec![CloudNode::new(0)],
+            can_buy_nodes: false,
+            can_buy_racks: false,
+            can_buy_datacenters: false,
             user_specs: Default::default(),
             cards_used: Default::default(),
         }

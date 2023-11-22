@@ -20,14 +20,12 @@ pub use crate::central::stuff::{Cost, Memory, Money, Ops, ServiceKind};
 
 /// the global period of the game watch interval
 pub const MILLISECONDS_PER_CYCLE: u32 = 50;
-// how many in-game ticks advance per interval cycle
-pub const TICKS_PER_CYCLE: u32 = 5;
 
 /// how many time units are in a single millisecond
 pub const TIME_UNITS_PER_MILLISECOND: u32 = 10;
 
-/// how many time units are in a single tick
-pub const TIME_UNITS_PER_TICK: u32 = TIME_UNITS_PER_MILLISECOND * MILLISECONDS_PER_CYCLE;
+/// how many time units are in a single game update cycle
+pub const TIME_UNITS_PER_CYCLE: u32 = TIME_UNITS_PER_MILLISECOND * MILLISECONDS_PER_CYCLE;
 
 /// The time watch service, emits ticks at a fixed interval when started.
 pub struct GameWatch {

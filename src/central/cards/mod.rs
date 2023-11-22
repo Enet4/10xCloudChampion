@@ -2,18 +2,54 @@ use crate::{
     CloudClientSpec, Cost, Money, Ops, ServiceKind, WorldState, TIME_UNITS_PER_MILLISECOND,
 };
 
+use super::engine::CPU_LEVELS;
+
 pub mod all;
 
 /// The specification for a card,
 /// including in what circumstances it should become available.
 #[derive(Debug)]
 pub struct CardSpec {
+    /// the unique identifier as a small static string
     pub id: &'static str,
+    /// the card's title
     pub title: &'static str,
+    /// a short description of the card
     pub description: &'static str,
+    /// the cost of the card,
+    /// including which operations are needed
     pub cost: Cost,
+    /// the primary condition for the card to appear
+    /// in the project's panel
+    /// (the secondary condition is that
+    /// the operation service kinds in `cost` are unlocked)
     pub condition: CardCondition,
+    /// the effect of the card once used
     pub effect: CardEffect,
+}
+
+impl CardSpec {
+    /// Returns true if the card should be visible
+    /// according to the given world state.
+    pub fn should_appear(&self, state: &WorldState) -> bool {
+        // should not be a used card
+        !state.is_card_used(self.id)
+        // condition of appearance is fulfilled
+            && self.condition.should_appear(&state)
+        // check if the player has unlocked the service kinds
+            && self.has_services_unlocked(&state)
+        // and should not be a test card
+            && !self.id.starts_with("test")
+    }
+
+    fn has_services_unlocked(&self, state: &WorldState) -> bool {
+        // super service must be unlocked if it costs super ops
+        (self.cost.super_ops == Ops(0) || state.super_service.unlocked)
+        // epic service must be unlocked if it costs epic ops
+            && (self.cost.epic_ops == Ops(0) || state.epic_service.unlocked)
+        // awesome service must be unlocked if it costs awesome ops
+            && (self.cost.awesome_ops == Ops(0) || state.awesome_service.unlocked)
+    }
 }
 
 /// The condition at which a card should become available.
@@ -43,7 +79,8 @@ pub enum CardCondition {
     TotalAwesomeOps(Ops),
     /// the player has accumulated an amount of extra awesome ops
     AvailableAwesomeOps(Ops),
-
+    /// at least N requests have been dropped
+    RequestsDropped(u32),
     /// appear N ticks after another card has been used
     TimeAfterCard {
         /// the card index
@@ -52,6 +89,12 @@ pub enum CardCondition {
         /// at which this card should appear
         duration: u32,
     },
+    /// the first node has been upgraded to maximum CPU
+    FullyUpgradedNode,
+    /// the first rack has been fully upgraded
+    FullyUpgradedRack,
+    /// the first data center has been fully upgraded
+    FullyUpgradedDatacenter,
 }
 
 impl CardCondition {
@@ -68,9 +111,12 @@ impl CardCondition {
         }
     }
 
-    /// Returns true if the card should be visible
-    /// (unless it has already been used).
+    /// Returns true if the card condition is true for the given world state.
+    ///
+    /// Does not check whether the card has been used
+    /// nor whether the service kinds in the cost are unlocked.
     pub fn should_appear(&self, state: &WorldState) -> bool {
+        // then check the primary condition
         match self {
             Self::Test { test } => *test,
             Self::Funds(money) => state.funds >= *money,
@@ -84,6 +130,7 @@ impl CardCondition {
             Self::AvailableEpicOps(ops) => state.epic_service.available >= *ops,
             Self::TotalAwesomeOps(ops) => state.awesome_service.total >= *ops,
             Self::AvailableAwesomeOps(ops) => state.awesome_service.available >= *ops,
+            Self::RequestsDropped(count) => state.requests_dropped >= *count as u64,
             Self::TimeAfterCard { card, duration } => {
                 match state
                     .cards_used
@@ -96,6 +143,9 @@ impl CardCondition {
                     }
                 }
             }
+            Self::FullyUpgradedNode => state.nodes[0].cpu_level == (CPU_LEVELS.len() - 1) as u8,
+            Self::FullyUpgradedRack => false,       // TODO
+            Self::FullyUpgradedDatacenter => false, // TODO
         }
     }
 }

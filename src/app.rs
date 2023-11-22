@@ -116,9 +116,12 @@ impl Component for Game {
             }
         };
 
-        // reset waiting requests
+        // reset CPU load and waiting requests
         // because request queue is not saved
         for node in state.nodes.iter_mut() {
+            node.processing = 0;
+            node.ram_reserved = Memory::zero();
+            node.ram_usage = Memory::zero();
             node.requests.clear();
         }
 
