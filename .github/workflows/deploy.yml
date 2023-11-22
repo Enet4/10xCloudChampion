@@ -38,7 +38,7 @@ jobs:
       with:
         version: 'latest'
     - name: Build
-      run: trunk build --release
+      run: trunk build --release --public-url=https://enet4.github.io/10xCloudChampion
     - name: Setup Pages
       uses: actions/configure-pages@v3
     - name: Upload artifact
