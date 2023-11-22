@@ -7,7 +7,7 @@ use cloud_champion::components::services::CloudService;
 use cloud_champion::components::total_stats::{TotalStats, TotalStatsProps};
 use cloud_champion::{
     GameMsg, GameWatch, Memory, Money, Ops, PlayerAction, ServiceKind, WorldState,
-    TIME_UNITS_PER_TICK,
+    TIME_UNITS_PER_CYCLE,
 };
 use js_sys::wasm_bindgen::UnwrapThrowExt;
 use yew::prelude::*;
@@ -106,7 +106,7 @@ impl Component for Game {
     type Properties = GameProps;
 
     fn create(ctx: &Context<Self>) -> Self {
-        let state = match ctx.props().origin {
+        let mut state = match ctx.props().origin {
             GameStateOrigin::New => WorldState::default(),
             GameStateOrigin::Continue => {
                 // load from local storage
@@ -115,6 +115,12 @@ impl Component for Game {
                     .unwrap_or_default()
             }
         };
+
+        // reset waiting requests
+        // because request queue is not saved
+        for node in state.nodes.iter_mut() {
+            node.requests.clear();
+        }
 
         let link = ctx.link().clone();
         let mut out = Self {
@@ -140,7 +146,7 @@ impl Component for Game {
                 true
             }
             GameMsg::Tick => {
-                let time = self.state.time + TIME_UNITS_PER_TICK as u64;
+                let time = self.state.time + TIME_UNITS_PER_CYCLE as u64;
                 self.engine.update(&mut self.state, time);
                 true
             }
@@ -222,6 +228,7 @@ impl Component for Game {
                     on_click={on_op_click}
                     {on_price_change}
                     new={self.state.base_service.total == Ops(0)}
+                    private={self.state.base_service.private}
                     />
             }
         };
@@ -254,6 +261,7 @@ impl Component for Game {
                     on_click={on_op_click}
                     {on_price_change}
                     new={super_service.total == Ops(0)}
+                    private={super_service.private}
                     />
             }
         } else {
@@ -288,7 +296,7 @@ impl Component for Game {
                     on_click={on_op_click}
                     {on_price_change}
                     new={epic_service.total == Ops(0)}
-                    private={true}
+                    private={epic_service.private}
                     />
             }
         } else {
@@ -323,7 +331,7 @@ impl Component for Game {
                     on_click={on_op_click}
                     {on_price_change}
                     new={awesome_service.total == Ops(0)}
-                    private={true}
+                    private={awesome_service.private}
                     />
             }
         } else {
@@ -353,14 +361,7 @@ impl Component for Game {
 
         let cards: Html = all_cards
             .iter()
-            .filter(|card| {
-                // should not be a used card
-                !self.state.is_card_used(card.id)
-                // condition of appearance is fulfilled
-                    && card.condition.should_appear(&self.state)
-                // and should not be a test card
-                    && !card.id.starts_with("test")
-            })
+            .filter(|card| card.should_appear(&self.state))
             .map(|card| {
                 let link = ctx.link().clone();
                 let cost = card.cost.clone();
