@@ -7,7 +7,7 @@
     padding: 0.5rem;
     width: 18rem;
     height: 4.5rem;
-    font-size: 1rem;
+    font-size: 0.95rem;
     text-align: left;
 
     // used for containing title and cost
@@ -18,7 +18,7 @@
 
         .cost {
             display: inline-block;
-            font-size: 0.825rem;
+            font-size: 0.8rem;
             margin-left: auto;
             text-align: right;
         }
@@ -27,7 +27,7 @@
 
     // used for description
     p {
-        font-size: 0.85rem;
+        font-size: 0.8rem;
         margin: 4px 0px 0px 0px;
     }
 }
