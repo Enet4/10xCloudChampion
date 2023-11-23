@@ -123,3 +123,15 @@ Added many more card specifications.
 Fixed some other issues found in
 request generation and game saving/loading.
 Added CI workflow to deploy the game automatically to GitHub Pages.
+
+## Day 16: 2023-11-23
+
+Fixed many serious bugs with cards and event queue.
+Improved engine resilience to missing user specs.
+Extended cards.
+Made some cloud service info transients so that they don't serialize.
+Improved styles.
+Worked on main menu a bit more,
+including warning the player if the browser can't save the game.
+Changed costs substantially.
+Adjusted demand calculation and card conditions.
