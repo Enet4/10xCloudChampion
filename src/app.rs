@@ -45,7 +45,7 @@ impl Component for App {
         }
     }
 
-    fn update(&mut self, ctx: &Context<Self>, msg: Self::Message) -> bool {
+    fn update(&mut self, _ctx: &Context<Self>, msg: Self::Message) -> bool {
         match msg {
             Msg::NewGame => {
                 self.state = AppState::Game(GameStateOrigin::New);
@@ -62,12 +62,18 @@ impl Component for App {
         match &self.state {
             AppState::MainMenu => {
                 let link = ctx.link().clone();
-                let has_save = WorldState::has_saved_game().map(|_| true).unwrap_or(false);
+                let (can_save, has_save) = match WorldState::has_saved_game() {
+                    Ok(true) => (true, true),
+                    Ok(false) => (true, false),
+                    Err(_) => (false, false),
+                };
+
                 html! {
                     <Menu
                         newgame_handler={link.callback(|_| Msg::NewGame)}
                         continuegame_handler={link.callback(|_| Msg::ContinueGame)}
                         {has_save}
+                        {can_save}
                         />
                 }
             }
@@ -130,6 +136,13 @@ impl Component for Game {
         out.engine.bootstrap_events(&mut out.state);
 
         out
+    }
+
+    fn destroy(&mut self, _ctx: &Context<Self>) {
+        // try to save before closing
+        if let Err(e) = self.state.save_game() {
+            gloo_console::error!("Failed to save game state: {:?}", e);
+        }
     }
 
     fn update(&mut self, ctx: &Context<Self>, msg: Self::Message) -> bool {

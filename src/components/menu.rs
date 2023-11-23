@@ -7,6 +7,7 @@ pub struct MenuProps {
     pub newgame_handler: Callback<()>,
     pub continuegame_handler: Callback<()>,
     pub has_save: bool,
+    pub can_save: bool,
 }
 
 #[function_component]
@@ -24,6 +25,12 @@ pub fn Menu(props: &MenuProps) -> Html {
                         play_zip_click();
                         continuegame_handler.emit(())
                     }}>{"Continue Game"}</button>
+                } else if !props.can_save {
+                    <div class="menu-warn">
+                        {"WARNING: Your browser is not allowing you to save your game. "}
+                        <br/>
+                        {"Disable shields or enable local storage to save your progress."}
+                    </div>
                 }
                 <button onclick={move |_| {
                     play_zip_click();
