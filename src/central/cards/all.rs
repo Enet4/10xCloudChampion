@@ -171,15 +171,15 @@ pub static ALL_CARDS: &'static [CardSpec] = &[
         ),
     },
     CardSpec {
-        id: "d0",
+        id: "d1",
         title: "Optimize SEO",
-        description: "",
+        description: "Improves your ranking on search engines",
         cost: Cost::dollars(1).and(Cost::base_ops(850)),
         condition: CardCondition::AvailableBaseOps(Ops(500)),
         effect: CardEffect::AddPublicity(12.0),
     },
     CardSpec {
-        id: "d1",
+        id: "d2",
         title: "Fliers",
         description: "Good ol' paper ads around SV",
         cost: Cost::dollars(150).and(Cost::base_ops(900)),
@@ -187,7 +187,7 @@ pub static ALL_CARDS: &'static [CardSpec] = &[
         effect: CardEffect::AddPublicity(14.0),
     },
     CardSpec {
-        id: "d2",
+        id: "d3",
         title: "3 second video ad",
         description: "A sneak peek into your services",
         cost: Cost::dollars(1_800).and(Cost::super_ops(600)),
@@ -195,7 +195,7 @@ pub static ALL_CARDS: &'static [CardSpec] = &[
         effect: CardEffect::AddPublicity(50.0),
     },
     CardSpec {
-        id: "d3",
+        id: "d4",
         title: "Capital city billboard ad",
         description: "Millions will see this board",
         cost: Cost::dollars(7_000).and(Cost::super_ops(3_200)),
@@ -203,7 +203,7 @@ pub static ALL_CARDS: &'static [CardSpec] = &[
         effect: CardEffect::AddPublicity(240.0),
     },
     CardSpec {
-        id: "d3.5",
+        id: "d4.5",
         title: "Blame caching",
         description: "Regain your clients' trust",
         cost: Cost::dollars(2_500),
@@ -214,7 +214,7 @@ pub static ALL_CARDS: &'static [CardSpec] = &[
         effect: CardEffect::AddPublicity(25.),
     },
     CardSpec {
-        id: "d4",
+        id: "d5",
         title: "Cricket World Cup ad",
         description: "Great services are publicized in great events",
         condition: CardCondition::Earned(Money::dollars(50_000)),
@@ -222,7 +222,7 @@ pub static ALL_CARDS: &'static [CardSpec] = &[
         effect: CardEffect::AddPublicity(350.0),
     },
     CardSpec {
-        id: "d5",
+        id: "d6",
         title: "Strategic company purchase",
         description: "Make a deal with EWS, your biggest rival",
         condition: CardCondition::Earned(Money::dollars(10_000_000)),
