@@ -757,17 +757,31 @@ pub struct CloudNode {
     /// which translates to the number of base requests fulfilled per core
     /// (higher tiered services will have a lower speed)
     pub cpu_speed: u32,
-    /// the amount of RAM required to process a request in one of the cores
+    /// the amount of RAM required to process
+    /// a base request in one of the cores
     pub ram_per_request: Memory,
 
     /// the number of requests currently being processed right now
+    ///
+    /// Transient.
+    #[serde(skip)]
     pub processing: u32,
+
     /// the total amount of RAM in use
+    ///
+    /// Transient.
+    #[serde(skip, default = "Memory::zero")]
     pub ram_usage: Memory,
+
     /// how much of `ram_usage` is reserved
+    ///
+    /// Transient.
+    #[serde(skip, default = "Memory::zero")]
     pub ram_reserved: Memory,
 
     /// queue of requests sitting in memory and waiting to be processed
+    ///
+    /// Transient.
     #[serde(skip)]
     pub requests: VecDeque<WaitingRequest>,
 }
