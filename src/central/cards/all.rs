@@ -99,17 +99,17 @@ pub static ALL_CARDS: &'static [CardSpec] = &[
         id: "b00",
         title: "Extra bonus from your family",
         description: "Grandpa believes in you",
-        cost: Cost::base_ops(125),
-        condition: CardCondition::AvailableBaseOps(Ops(250)),
-        effect: CardEffect::AddFunds(Money::dollars(200)),
+        cost: Cost::base_ops(500),
+        condition: CardCondition::AvailableBaseOps(Ops(1_000)),
+        effect: CardEffect::AddFunds(Money::dollars(500)),
     },
     CardSpec {
         id: "b000",
         title: "Donation from cousin V",
         description: "Your cool rich cousin believes in you",
-        cost: Cost::base_ops(1_024),
-        condition: CardCondition::AvailableBaseOps(Ops(2_048)),
-        effect: CardEffect::AddFunds(Money::dollars(2_000)),
+        cost: Cost::super_ops(1_024),
+        condition: CardCondition::AvailableSuperOps(Ops(2_048)),
+        effect: CardEffect::AddFunds(Money::dollars(10_000)),
     },
     CardSpec {
         id: "b1",
@@ -160,12 +160,12 @@ pub static ALL_CARDS: &'static [CardSpec] = &[
         cost: Cost::nothing(),
         condition: CardCondition::TimeAfterCard {
             card: ID_BASE_OPS_PUBLISHED,
-            duration: 5_000,
+            duration: 20_000,
         },
         effect: CardEffect::AddClientsWithPublicity(
             CloudClientSpec {
                 service: ServiceKind::Base,
-                trial_duration: 1_000,
+                trial_duration: 50_000,
             },
             1.,
         ),
