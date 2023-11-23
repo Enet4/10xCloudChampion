@@ -5,13 +5,20 @@ use crate::{CloudClientSpec, Cost, Money, Ops, ServiceKind};
 
 use super::{CardCondition, CardEffect, CardSpec};
 
+// declare constants for some card IDs to help prevent mistakes
+const ID_BASE_OPS_PUBLISHED: &str = "a0p";
+const ID_SUPER_OPS_UNLOCKED: &str = "a1";
+const ID_EPIC_OPS_UNLOCKED: &str = "a2";
+const ID_AWESOME_OPS_UNLOCKED: &str = "a3";
+const ID_MORE_CACHING: &str = "c1";
+
 /// All project cards in the game.
 ///
 /// They _must_ be inserted in id ascending order.
 pub static ALL_CARDS: &'static [CardSpec] = &[
     // --- service unlocking and publishing ---
     CardSpec {
-        id: "a0p",
+        id: ID_BASE_OPS_PUBLISHED,
         title: "Test your service",
         description: "Always test before delivering to the public",
         cost: Cost::base_ops(8),
@@ -19,11 +26,11 @@ pub static ALL_CARDS: &'static [CardSpec] = &[
         effect: CardEffect::PublishService(ServiceKind::Base),
     },
     CardSpec {
-        id: "a1",
+        id: ID_SUPER_OPS_UNLOCKED,
         title: "Super Ops",
         description: "Next generation Cloud services",
-        cost: Cost::base_ops(1_000).and(Cost::dollars(250)),
-        condition: CardCondition::TotalBaseOps(Ops(600)),
+        cost: Cost::base_ops(4_000).and(Cost::dollars(200)),
+        condition: CardCondition::TotalBaseOps(Ops(1_000)),
         effect: CardEffect::UnlockService(ServiceKind::Super),
     },
     CardSpec {
@@ -32,19 +39,19 @@ pub static ALL_CARDS: &'static [CardSpec] = &[
         description: "Deliver Super Ops to the public",
         cost: Cost::super_ops(16),
         condition: CardCondition::TimeAfterCard {
-            card: "a1",
-            duration: 5_000,
+            card: ID_SUPER_OPS_UNLOCKED,
+            duration: 6_000,
         },
         effect: CardEffect::PublishService(ServiceKind::Super),
     },
     CardSpec {
-        id: "a2",
+        id: ID_EPIC_OPS_UNLOCKED,
         title: "Epic Ops",
         description: "State of the art Cloud services",
-        cost: Cost::super_ops(2_000)
-            .and(Cost::base_ops(6_000))
+        cost: Cost::super_ops(10_000)
+            .and(Cost::base_ops(100_000))
             .and(Cost::dollars(5_420)),
-        condition: CardCondition::TotalSuperOps(Ops(1_000)),
+        condition: CardCondition::TotalSuperOps(Ops(5_000)),
         effect: CardEffect::UnlockService(ServiceKind::Epic),
     },
     CardSpec {
@@ -53,17 +60,17 @@ pub static ALL_CARDS: &'static [CardSpec] = &[
         description: "Deliver Epic Ops to the public",
         cost: Cost::epic_ops(32),
         condition: CardCondition::TimeAfterCard {
-            card: "a1",
-            duration: 22_000,
+            card: ID_EPIC_OPS_UNLOCKED,
+            duration: 20_000,
         },
         effect: CardEffect::PublishService(ServiceKind::Epic),
     },
     CardSpec {
-        id: "a3",
+        id: ID_AWESOME_OPS_UNLOCKED,
         title: "Awesome Ops",
         description: "The Cloud services to rule them all",
-        cost: Cost::epic_ops(5_000)
-            .and(Cost::super_ops(10_000))
+        cost: Cost::epic_ops(400_000)
+            .and(Cost::super_ops(4_000_000))
             .and(Cost::dollars(166_000)),
         condition: CardCondition::TotalEpicOps(Ops(2_800)),
         effect: CardEffect::UnlockService(ServiceKind::Awesome),
@@ -74,7 +81,7 @@ pub static ALL_CARDS: &'static [CardSpec] = &[
         description: "Deliver Awesome Ops to the public",
         cost: Cost::awesome_ops(64),
         condition: CardCondition::TimeAfterCard {
-            card: "a1",
+            card: ID_AWESOME_OPS_UNLOCKED,
             duration: 100_000,
         },
         effect: CardEffect::PublishService(ServiceKind::Awesome),
@@ -82,11 +89,27 @@ pub static ALL_CARDS: &'static [CardSpec] = &[
     // --- money bonuses and entitlements ---
     CardSpec {
         id: "b0",
+        title: "Incentive from your family",
+        description: "Father believes in you",
+        cost: Cost::base_ops(50),
+        condition: CardCondition::AvailableBaseOps(Ops(100)),
+        effect: CardEffect::AddFunds(Money::dollars(60)),
+    },
+    CardSpec {
+        id: "b00",
         title: "Extra bonus from your family",
         description: "Grandpa believes in you",
-        cost: Cost::base_ops(100),
-        condition: CardCondition::TotalBaseOps(Ops(100)),
-        effect: CardEffect::AddFunds(Money::dollars(100)),
+        cost: Cost::base_ops(125),
+        condition: CardCondition::AvailableBaseOps(Ops(250)),
+        effect: CardEffect::AddFunds(Money::dollars(200)),
+    },
+    CardSpec {
+        id: "b000",
+        title: "Donation from cousin V",
+        description: "Your cool rich cousin believes in you",
+        cost: Cost::base_ops(1_024),
+        condition: CardCondition::AvailableBaseOps(Ops(2_048)),
+        effect: CardEffect::AddFunds(Money::dollars(2_000)),
     },
     CardSpec {
         id: "b1",
@@ -122,7 +145,7 @@ pub static ALL_CARDS: &'static [CardSpec] = &[
         effect: CardEffect::MoreCaching,
     },
     CardSpec {
-        id: "c1",
+        id: ID_MORE_CACHING,
         title: "More caching",
         description: "Use more memory to make your service even faster",
         cost: Cost::money(Money::dollars(250)).and(Cost::super_ops(250)),
@@ -136,7 +159,7 @@ pub static ALL_CARDS: &'static [CardSpec] = &[
         description: "Offer a trial period for your first customer",
         cost: Cost::nothing(),
         condition: CardCondition::TimeAfterCard {
-            card: "a0",
+            card: ID_BASE_OPS_PUBLISHED,
             duration: 5_000,
         },
         effect: CardEffect::AddClientsWithPublicity(
@@ -148,28 +171,36 @@ pub static ALL_CARDS: &'static [CardSpec] = &[
         ),
     },
     CardSpec {
+        id: "d0",
+        title: "Optimize SEO",
+        description: "",
+        cost: Cost::dollars(1).and(Cost::base_ops(850)),
+        condition: CardCondition::AvailableBaseOps(Ops(500)),
+        effect: CardEffect::AddPublicity(12.0),
+    },
+    CardSpec {
         id: "d1",
         title: "Fliers",
-        description: "Good ol' paper ads",
-        cost: Cost::dollars(300).and(Cost::base_ops(25)),
+        description: "Good ol' paper ads around SV",
+        cost: Cost::dollars(150).and(Cost::base_ops(900)),
         condition: CardCondition::Earned(Money::dollars(100)),
-        effect: CardEffect::AddPublicity(10.0),
+        effect: CardEffect::AddPublicity(14.0),
     },
     CardSpec {
         id: "d2",
         title: "3 second video ad",
         description: "A sneak peek into your services",
-        cost: Cost::dollars(2_500).and(Cost::super_ops(50)),
+        cost: Cost::dollars(1_800).and(Cost::super_ops(600)),
         condition: CardCondition::Earned(Money::dollars(1_000)),
-        effect: CardEffect::AddPublicity(30.0),
+        effect: CardEffect::AddPublicity(50.0),
     },
     CardSpec {
         id: "d3",
         title: "Capital city billboard ad",
         description: "Millions will see this board",
-        cost: Cost::dollars(7_000).and(Cost::super_ops(100)),
+        cost: Cost::dollars(7_000).and(Cost::super_ops(3_200)),
         condition: CardCondition::Earned(Money::dollars(5_000)),
-        effect: CardEffect::AddPublicity(220.0),
+        effect: CardEffect::AddPublicity(240.0),
     },
     CardSpec {
         id: "d3.5",
@@ -177,25 +208,25 @@ pub static ALL_CARDS: &'static [CardSpec] = &[
         description: "Regain your clients' trust",
         cost: Cost::dollars(2_500),
         condition: CardCondition::TimeAfterCard {
-            card: "c1",
-            duration: 80_000,
+            card: ID_MORE_CACHING,
+            duration: 100_000,
         },
         effect: CardEffect::AddPublicity(25.),
     },
     CardSpec {
         id: "d4",
         title: "Cricket World Cup ad",
-        description: "Great services should be publicized in great events",
+        description: "Great services are publicized in great events",
         condition: CardCondition::Earned(Money::dollars(50_000)),
-        cost: Cost::dollars(90_000).and(Cost::epic_ops(80)),
-        effect: CardEffect::AddPublicity(220.0),
+        cost: Cost::dollars(90_000).and(Cost::epic_ops(6_000)),
+        effect: CardEffect::AddPublicity(350.0),
     },
     CardSpec {
         id: "d5",
         title: "Strategic company purchase",
         description: "Make a deal with EWS, your biggest rival",
         condition: CardCondition::Earned(Money::dollars(10_000_000)),
-        cost: Cost::dollars(169_400_000).and(Cost::epic_ops(250)),
+        cost: Cost::dollars(169_400_000).and(Cost::epic_ops(50_000)),
         effect: CardEffect::AddPublicity(4_000.0),
     },
     CardSpec {
@@ -203,7 +234,7 @@ pub static ALL_CARDS: &'static [CardSpec] = &[
         title: "Hypodrones",
         description: "Your ultimate brand ambassadors",
         condition: CardCondition::Earned(Money::dollars(1_000_000_000)),
-        cost: Cost::dollars(5_000_000_000).and(Cost::awesome_ops(400)),
+        cost: Cost::dollars(5_000_000_000).and(Cost::awesome_ops(70_000)),
         effect: CardEffect::AddPublicity(100_000.0),
     },
     // --- energy cards ---
@@ -243,24 +274,24 @@ pub static ALL_CARDS: &'static [CardSpec] = &[
         id: "e4",
         title: "Dedicated Power Plant",
         description: "All systems powered by your own energy",
-        cost: Cost::dollars(30_000).and(Cost::epic_ops(600)),
-        condition: CardCondition::TotalEpicOps(Ops(1_000)),
+        cost: Cost::dollars(30_000).and(Cost::epic_ops(10_000)),
+        condition: CardCondition::TotalEpicOps(Ops(3_000)),
         effect: CardEffect::SetElectricityCostLevel(5),
     },
     CardSpec {
         id: "e5",
         title: "Fusion reactor",
         description: "Discover a source of energy that is too good to be true",
-        cost: Cost::dollars(120_000).and(Cost::epic_ops(4_000)),
-        condition: CardCondition::TotalAwesomeOps(Ops(180)),
+        cost: Cost::dollars(120_000).and(Cost::epic_ops(220_000)),
+        condition: CardCondition::TotalEpicOps(Ops(100_000)),
         effect: CardEffect::SetElectricityCostLevel(6),
     },
     CardSpec {
         id: "e6",
         title: "Free energy",
         description: "Develop a groundbreaking source of free energy",
-        cost: Cost::dollars(4_000_000).and(Cost::awesome_ops(1_000)),
-        condition: CardCondition::TotalAwesomeOps(Ops(100)),
+        cost: Cost::dollars(4_000_000).and(Cost::awesome_ops(111_111)),
+        condition: CardCondition::TotalAwesomeOps(Ops(10_000)),
         effect: CardEffect::SetElectricityCostLevel(7),
     },
     // --- hardware scaling cards ---
