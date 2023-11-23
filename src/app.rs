@@ -203,7 +203,7 @@ impl Component for Game {
                 let link = ctx.link().clone();
                 Callback::from(move |_| link.send_message(PlayerAction::PayElectricityBill))
             },
-            client_count: None,
+            demand: Some(self.state.demand).filter(|_| self.state.can_see_demand),
         };
 
         // service panel: cloud services

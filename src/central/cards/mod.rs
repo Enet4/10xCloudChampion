@@ -81,6 +81,8 @@ pub enum CardCondition {
     AvailableAwesomeOps(Ops),
     /// at least N requests have been dropped
     RequestsDropped(u32),
+    /// the player received their first electricity bill
+    FirstBillArrived,
     /// appear N ticks after another card has been used
     TimeAfterCard {
         /// the card index
@@ -131,6 +133,7 @@ impl CardCondition {
             Self::TotalAwesomeOps(ops) => state.awesome_service.total >= *ops,
             Self::AvailableAwesomeOps(ops) => state.awesome_service.available >= *ops,
             Self::RequestsDropped(count) => state.requests_dropped >= *count as u64,
+            Self::FirstBillArrived => state.electricity.last_bill_time > 0,
             Self::TimeAfterCard { card, duration } => {
                 match state
                     .cards_used
@@ -144,7 +147,9 @@ impl CardCondition {
                 }
             }
             Self::FullyUpgradedNode => state.nodes[0].cpu_level == (CPU_LEVELS.len() - 1) as u8,
-            Self::FullyUpgradedRack => false,       // TODO
+            Self::FullyUpgradedRack => {
+                state.nodes.len() == 4 && state.nodes[1].cpu_level == (CPU_LEVELS.len() - 1) as u8
+            }
             Self::FullyUpgradedDatacenter => false, // TODO
         }
     }
@@ -188,4 +193,6 @@ pub enum CardEffect {
     UnlockMultiRacks,
     /// Unlock purchasing of new data center warehouses
     UnlockMultiDatacenters,
+    /// Unlock demand estimate in business panel
+    UnlockDemandEstimate,
 }

@@ -54,7 +54,7 @@ pub static RAM_LEVELS: [(Memory, Money); 11] = [
 /// namely the memory reserve multiplier (0)
 /// and the cache hit rate (1)
 pub static CACHE_LEVELS: [(f32, f32); 5] =
-    [(1., 0.), (1.5, 0.25), (4., 0.5), (10., 0.75), (25., 0.85)];
+    [(1., 0.), (4., 0.25), (16., 0.5), (20., 0.75), (24., 0.85)];
 
 /// Modifiers for the time to process a request and memory required,
 /// a number between 0 and 1,
@@ -70,19 +70,19 @@ pub static SOFTWARE_LEVELS: [(f64, f64); 5] = [
 /// The electricity cost in Wattever
 pub static ELECTRICITY_COST_LEVELS: [Money; 8] = [
     // base cost
-    Money::cents(28),
+    Money::cents(30),
     // renegotiate
-    Money::cents(25),
+    Money::cents(26),
     // repair A/C
     Money::cents(20),
     // buy solar panels
-    Money::cents(12),
+    Money::cents(16),
     // commit to clean power plan
-    Money::cents(4),
+    Money::cents(5),
     // dedicated power plant
-    Money::dec_cents(10),
+    Money::cents(1),
     // fusion reactor discovery
-    Money::millicents(50),
+    Money::millicents(80),
     // free energy
     Money::zero(),
 ];
@@ -111,14 +111,14 @@ pub static DEMAND_DOS_THRESHOLD: f32 = 250.0;
 pub static INCREASE_DEMAND_PERIOD: u64 = 150_000;
 
 /// time period after which the user is given electricity bills to pay
-pub static ELECTRICITY_BILL_PERIOD: u64 = 2_000_000;
+pub static ELECTRICITY_BILL_PERIOD: u64 = 2_500_000;
 
 /// time period after which a major update is performed
 /// (also subtle but can do more expensive things)
 pub static MAJOR_UPDATE_PERIOD: u64 = 3_000;
 
 /// time period after which the game is automatically saved to local storage
-pub static GAME_SAVE_PERIOD: u64 = 400_000;
+pub static GAME_SAVE_PERIOD: u64 = 360_000;
 
 /// The main game engine, which processes the game state
 /// and produces new events.
@@ -171,9 +171,17 @@ where
                 state.electricity.last_bill_time = state.time;
             }
             PlayerAction::ChangePrice { kind, new_price } => {
+                //let demand = state.demand;
                 // change the price and recalculate demand
                 let service = state.service_by_kind_mut(kind);
                 service.price = new_price;
+
+                /*
+                gloo_console::debug!(
+                    "Demand based on price changed to ",
+                    service.calculate_demand(demand)
+                );
+                */
             }
             PlayerAction::UpgradeCpu { node } => {
                 let funds = state.funds;
@@ -247,6 +255,9 @@ where
         let effect = &card.effect;
         match effect {
             CardEffect::Nothing => { /* no op */ }
+            CardEffect::UnlockDemandEstimate => {
+                state.can_see_demand = true;
+            }
             CardEffect::UnlockService(kind) => {
                 let service = state.service_by_kind_mut(*kind);
                 service.unlocked = true;
@@ -454,17 +465,19 @@ where
     fn update_major(&mut self, state: &mut WorldState, time: Time) {
         // check whether to increase demand from time passing by
         if time / INCREASE_DEMAND_PERIOD - state.time / INCREASE_DEMAND_PERIOD > 0 {
-            // increase demand if lower than 100
-            if state.demand < 100. {
-                state.demand += 0.125;
-            }
+            // increase demand a tiny bit
+            state.demand += 0.125;
             gloo_console::debug!("Demand increased to ", state.demand);
         }
 
         // check whether to issue an electricity bill
         if time / ELECTRICITY_BILL_PERIOD - state.time / ELECTRICITY_BILL_PERIOD > 0 {
-            // issue an electricity bill
-            state.electricity.emit_bill();
+            // check whether we have enough costs to worth issuing a bill
+            let total_cost = state.electricity.check_bill();
+            if total_cost > Money::cents(50) {
+                // issue an electricity bill
+                state.electricity.emit_bill_for(total_cost, time);
+            }
         }
 
         // check whether to save the game

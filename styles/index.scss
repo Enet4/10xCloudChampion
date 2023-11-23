@@ -5,7 +5,7 @@
 
 * {
   box-sizing: border-box;
-  font-family: 'PT Sans Regular', 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+  font-family: 'PT Sans Regular', 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Verdana, sans-serif;
   color: #020202;
 }
 
@@ -46,6 +46,14 @@ header {
     margin-top: auto;
     flex-grow: 1;
   }
+
+  @media screen and (max-width: 600px) {
+    flex-direction: column;
+
+    div {
+      margin-top: 0;
+    }
+  }
 }
 
 .panel-container {
@@ -61,6 +69,11 @@ header {
 
   h3 {
     border-bottom: 2px solid #020202;
+  }
+
+  @media (max-width: 440px) {
+    min-width: unset;
+    width: 100%;
   }
 }
 

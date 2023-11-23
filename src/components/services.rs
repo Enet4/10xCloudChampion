@@ -178,12 +178,14 @@ impl Component for CloudService {
                         <span>{"TESTING"}</span>
                     </div>
                 } else {
-                    <div class="price">
-                        <span>{"Price: "}</span><span class="money">{ctx.props().price.to_string()}</span>
-                    </div>
-                    <div class="change">
-                        <button onclick={on_lower_price}>{"lower"}</button>
-                        <button onclick={on_raise_price}>{"raise"}</button>
+                    <div class="price-container">
+                        <div class="price">
+                            <span>{"Price: "}</span><span class="money">{ctx.props().price.to_string()}</span>
+                        </div>
+                        <div class="change">
+                            <button onclick={on_lower_price}>{"lower"}</button>
+                            <button onclick={on_raise_price}>{"raise"}</button>
+                        </div>
                     </div>
                 }
                 // pop-ups

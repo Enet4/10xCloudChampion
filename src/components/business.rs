@@ -38,10 +38,9 @@ pub struct BusinessProps {
     /// callback for when the player clicks the "Pay" button
     pub on_pay_bills: Callback<()>,
 
-    /// estimate for the total number of clients using our services
+    /// estimate for the service demand
     /// (or `None` if this has not been unlocked yet)
-    #[prop_or_default]
-    pub client_count: Option<u64>,
+    pub demand: Option<f32>,
 }
 
 /// The business component.
@@ -87,8 +86,8 @@ pub fn Business(props: &BusinessProps) -> Html {
                 {available_ops_to_show}
             </p>
             <p>
-                if let Some(count) = props.client_count {
-                    <><span>{"Clients: "}</span> {count} <br/></>
+                if let Some(demand) = props.demand {
+                    <><span>{"Demand: "}</span> {format!("{:.1}%", demand)} <br/></>
                 }
             </p>
             {electricity}

@@ -69,6 +69,11 @@ pub struct WorldState {
     /// all server nodes
     pub nodes: Vec<CloudNode>,
 
+    /// whether the player can see a service demand estimate
+    /// in the business panel
+    #[serde(default, skip_serializing_if = "can_buy_default")]
+    pub can_see_demand: bool,
+
     /// whether the player has unlocked
     /// buying more cloud nodes
     #[serde(default, skip_serializing_if = "can_buy_default")]
@@ -263,6 +268,7 @@ impl Default for WorldState {
             electricity: Default::default(),
             requests_dropped: 0,
             nodes: vec![CloudNode::new(0)],
+            can_see_demand: false,
             can_buy_nodes: false,
             can_buy_racks: false,
             can_buy_datacenters: false,
@@ -378,12 +384,17 @@ impl Electricity {
         self.total_consumed += milli_wattever;
     }
 
+    /// Calculate the cost of the bill if it were to be emitted now
+    pub fn check_bill(&self) -> Money {
+        ELECTRICITY_COST_LEVELS[self.cost_level as usize] * (self.consumed * 1e-3)
+    }
+
     /// emit a bill for the consumed electricity,
     /// and reset the consumed amount to zero
-    pub fn emit_bill(&mut self) {
-        let total_cost = ELECTRICITY_COST_LEVELS[self.cost_level as usize] * (self.consumed * 1e-3);
+    pub fn emit_bill_for(&mut self, total_cost: Money, time: Time) {
         self.total_due += total_cost;
         self.consumed = 0.;
+        self.last_bill_time = time;
     }
 }
 
