@@ -335,7 +335,7 @@ impl ServiceInfo {
     /// calculate service demand based on base demand and price
     pub fn calculate_demand(&self, base_demand: f32) -> f32 {
         let millicents = (self.price.to_millicents() as f32).max(0.25);
-        base_demand * 0.2 + base_demand * 1e3 / (millicents * millicents)
+        base_demand * 0.125 + base_demand * 2560. / millicents.powf(2.5)
     }
 }
 
