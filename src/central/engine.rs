@@ -266,7 +266,6 @@ where
                 if state.user_specs.iter().all(|spec| spec.service != *kind) {
                     state.user_specs.push(CloudUserSpec {
                         id: state.next_user_spec_id(),
-                        amount: 1,
                         service: *kind,
                         bad: false,
                         trial_time: 0,
@@ -285,7 +284,6 @@ where
                     {
                         state.user_specs.push(CloudUserSpec {
                             id: state.next_user_spec_id(),
-                            amount: 1,
                             service: *kind,
                             bad: true,
                             trial_time: 0,
@@ -311,7 +309,6 @@ where
             CardEffect::AddClients(spec) => {
                 state.user_specs.push(CloudUserSpec {
                     id: state.next_user_spec_id(),
-                    amount: spec.amount,
                     service: spec.service,
                     trial_time: state.time + spec.trial_duration as u64,
                     bad: false,
@@ -324,7 +321,6 @@ where
 
                 state.user_specs.push(CloudUserSpec {
                     id: state.next_user_spec_id(),
-                    amount: spec.amount,
                     service: spec.service,
                     trial_time: if spec.trial_duration > 0 {
                         state.time + spec.trial_duration as u64
@@ -355,7 +351,6 @@ where
                         {
                             state.user_specs.push(CloudUserSpec {
                                 id: state.next_user_spec_id(),
-                                amount: 1,
                                 service,
                                 bad: true,
                                 trial_time: 0,
@@ -398,10 +393,11 @@ where
             let demand = service.calculate_demand(state.demand);
             let duration = self.gen.next_request(demand);
             let timestamp = duration as u64;
+            let amount = 1;
             self.queue.push(RequestEvent::new_arrived(
                 timestamp,
                 Some(user_spec.id),
-                user_spec.amount,
+                amount,
                 user_spec.service,
                 user_spec.bad,
             ));
@@ -419,12 +415,13 @@ where
         };
 
         let demand = service.calculate_demand(state.demand);
+        let amount = 1;
         let duration = self.gen.next_request(demand);
         let timestamp = duration as u64;
         self.queue.push(RequestEvent::new_arrived(
             timestamp,
             Some(user_spec.id),
-            user_spec.amount,
+            amount,
             user_spec.service,
             user_spec.bad,
         ));
@@ -521,12 +518,13 @@ where
                                 crate::ServiceKind::Awesome => &state.awesome_service,
                             };
                             let demand = service.calculate_demand(state.demand);
+                            let amount = 1;
                             let duration = self.gen.next_request(demand);
                             let timestamp = event.timestamp + duration as u64 * event.amount as u64;
                             push_event(RequestEvent::new_arrived(
                                 timestamp,
                                 event.user_spec_id,
-                                spec.amount,
+                                amount,
                                 spec.service,
                                 spec.bad,
                             ));
@@ -645,11 +643,16 @@ where
                 // 3. calculate revenue if applicable
                 let revenue = if !event.bad {
                     if let Some(id) = event.user_spec_id {
-                        let spec = &state.user_spec(id).unwrap();
-                        if spec.is_paying(time) {
-                            service_price * event.amount as i32 + service_entitlement
+                        if let Some(spec) = &state.user_spec(id) {
+                            if spec.is_paying(time) {
+                                service_price * event.amount as i32 + service_entitlement
+                            } else {
+                                // within trial period
+                                service_entitlement
+                            }
                         } else {
-                            // within trial period
+                            // specification was deleted,
+                            // treat it as clicked by player
                             service_entitlement
                         }
                     } else {
@@ -666,15 +669,14 @@ where
                 node.ram_usage -= ram_required;
 
                 // 5. if there are requests waiting
-                if !node.requests.is_empty() {
+                if let Some(request) = node.requests.pop_front() {
                     // pop one and schedule a new request processed event
-                    let request = node.requests.pop_front().unwrap();
                     let duration =
                         node.time_per_request(event.service, software_level) * request.amount;
 
                     let service = request.service;
                     let bad = if let Some(id) = request.user_spec_id {
-                        state.user_spec(id).unwrap().bad
+                        state.user_spec(id).map(|spec| spec.bad).unwrap_or(false)
                     } else {
                         false
                     };

@@ -141,7 +141,6 @@ pub static ALL_CARDS: &'static [CardSpec] = &[
         },
         effect: CardEffect::AddClientsWithPublicity(
             CloudClientSpec {
-                amount: 1,
                 service: ServiceKind::Base,
                 trial_duration: 1_000,
             },

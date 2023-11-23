@@ -11,8 +11,6 @@ use super::stuff::ServiceKind;
 pub struct CloudUserSpec {
     /// a unique identifier
     pub id: u32,
-    /// a base multiplier for users following this specification
-    pub amount: u32,
     /// the service this client will be using
     pub service: ServiceKind,
     /// the time up to which the user does not have to pay per request
@@ -34,8 +32,6 @@ impl CloudUserSpec {
 /// and trial time is specified as a duration instead of a timestamp.
 #[derive(Debug, Clone, PartialEq)]
 pub struct CloudClientSpec {
-    /// a base multiplier for users following this specification
-    pub amount: u32,
     /// the service this client will be using
     pub service: ServiceKind,
     /// the time duration in which the user does not have to pay per request
