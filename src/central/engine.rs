@@ -432,23 +432,13 @@ where
 
     /// Process the game state and produce new events.
     pub fn update(&mut self, state: &mut WorldState, time: Time) {
-        // grab upcoming events
-        let mut events = self.queue.events_until(time);
-
-        let mut preemptive_events = Vec::new();
-
-        loop {
-            // process events until all of them only happen after the given time
-            for event in events {
-                self.process_event(state, time, event, &mut preemptive_events);
-            }
-            if !preemptive_events.is_empty() {
-                // do another round of processing
-                events = preemptive_events.clone();
-                preemptive_events.clear();
-            } else {
+        // process events until the given time
+        while let Some(next_event_time) = self.queue.next_event_time() {
+            if next_event_time > time {
                 break;
             }
+            let event = self.queue.pop().unwrap();
+            self.process_event(state, time, event);
         }
 
         let duration = time - state.time;
@@ -490,22 +480,10 @@ where
     }
 
     /// process a single request event
-    fn process_event(
-        &mut self,
-        state: &mut WorldState,
-        time: Time,
-        event: RequestEvent,
-        preemptive_events: &mut Vec<RequestEvent>,
-    ) {
-        // closure to add a new event to the main queue or the preemptive queue
-        // (the preemptive queue is for events
-        // which need to be processed in this iteration)
+    fn process_event(&mut self, state: &mut WorldState, time: Time, event: RequestEvent) {
+        // closure to add a new event to the main queue
         let mut push_event = |event: RequestEvent| {
-            if event.timestamp <= time {
-                preemptive_events.push(event);
-            } else {
-                self.queue.push(event);
-            }
+            self.queue.push(event);
         };
 
         match event.kind {
@@ -562,8 +540,9 @@ where
                         }
 
                         if should_drop_spec {
-                            // TODO clean up unused user spec
-                            // (should be done without disrupting existing requests)
+                            // clean up unused user spec
+                            // (this is safe because the user spec ID is unique)
+                            state.user_specs.retain(|spec| spec.id != user_spec_id);
                         }
                     } else {
                         gloo_console::warn!("Invalid user specification ID ", user_spec_id);

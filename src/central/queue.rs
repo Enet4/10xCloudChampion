@@ -35,10 +35,7 @@ pub enum RequestEventStage {
     RequestRouted { node_num: u32 },
     /// a node finished processing the request (or request set),
     /// and how much RAM in total it was using
-    RequestProcessed {
-        node_num: u32,
-        ram_required: Memory,
-    },
+    RequestProcessed { node_num: u32, ram_required: Memory },
 }
 
 impl RequestEvent {
@@ -116,21 +113,96 @@ impl RequestEventQueue {
         }
     }
 
-    /// get the list of all events until the given tick,
-    /// updating the last tick
-    pub fn events_until(&mut self, tick: Time) -> Vec<RequestEvent> {
-        let mut events = Vec::new();
-        while let Some(event) = self.queue.front() {
-            if event.timestamp > tick {
-                break;
-            }
-            events.push(self.queue.pop_front().unwrap());
-        }
-        self.last_time = tick;
-        events
+    /// Get the time when the next event will happen,
+    /// or `None` if the queue is empty.
+    pub fn next_event_time(&self) -> Option<Time> {
+        self.queue.front().map(|event| event.timestamp)
+    }
+
+    /// Pop the next occurring event from the queue.
+    pub fn pop(&mut self) -> Option<RequestEvent> {
+        self.queue.pop_front()
     }
 
     pub fn last_time(&self) -> Time {
         self.last_time
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{RequestEvent, RequestEventQueue};
+
+    #[test]
+    fn test_queue() {
+        let mut queue = RequestEventQueue::new();
+
+        // add a few events in random order
+        queue.push(RequestEvent::new_arrived(
+            1000,
+            Some(1),
+            1,
+            crate::ServiceKind::Base,
+            false,
+        ));
+
+        queue.push(RequestEvent::new_arrived(
+            800,
+            Some(2),
+            1,
+            crate::ServiceKind::Base,
+            false,
+        ));
+
+        queue.push(RequestEvent::new_arrived(
+            50,
+            Some(3),
+            1,
+            crate::ServiceKind::Base,
+            true,
+        ));
+
+        queue.push(RequestEvent::new_arrived(
+            2020,
+            Some(4),
+            1,
+            crate::ServiceKind::Super,
+            false,
+        ));
+        queue.push(RequestEvent::new_arrived(
+            1620,
+            None,
+            1,
+            crate::ServiceKind::Base,
+            false,
+        ));
+
+        // check the time of the next event
+        assert_eq!(queue.next_event_time(), Some(50));
+
+        // check that all events are popped in order
+        let event = queue.pop().unwrap();
+        assert_eq!(event.timestamp, 50);
+        assert_eq!(event.user_spec_id, Some(3));
+        assert_eq!(event.service, crate::ServiceKind::Base);
+
+        let event = queue.pop().unwrap();
+        assert_eq!(event.timestamp, 800);
+        assert_eq!(event.user_spec_id, Some(2));
+
+        let event = queue.pop().unwrap();
+        assert_eq!(event.timestamp, 1000);
+        assert_eq!(event.user_spec_id, Some(1));
+
+        let event = queue.pop().unwrap();
+        assert_eq!(event.timestamp, 1620);
+        assert_eq!(event.user_spec_id, None);
+
+        let event = queue.pop().unwrap();
+        assert_eq!(event.timestamp, 2020);
+        assert_eq!(event.user_spec_id, Some(4));
+
+        // we're done
+        assert_eq!(queue.next_event_time(), None);
     }
 }
