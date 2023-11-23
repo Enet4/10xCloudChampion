@@ -1,5 +1,5 @@
 .power {
-    width: 26rem;
+    min-width: 25rem;
     border: 1px solid #020202;
     background-color: #dedede;
     padding: 8px;
@@ -78,12 +78,15 @@
             border-radius: 10px;
             border: 1px solid #111;
         }
+
         .led-ok {
             animation: led-blink-ok 0.5s step-start infinite;
         }
+
         .led-fail {
             animation: led-blink-problem 0.25s step-start infinite;
         }
+
         .led-powersave {
             animation: led-blink-powersave 0.75s step-start infinite;
         }
@@ -97,7 +100,7 @@
         text-align: center;
         vertical-align: super;
     }
-    
+
     // the container for the upgrade buttons and labels
     .upgrade-container {
         display: flex;
