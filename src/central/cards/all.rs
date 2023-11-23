@@ -45,7 +45,7 @@ pub static ALL_CARDS: &'static [CardSpec] = &[
             .and(Cost::base_ops(6_000))
             .and(Cost::dollars(5_420)),
         condition: CardCondition::TotalSuperOps(Ops(1_000)),
-        effect: CardEffect::UnlockService(ServiceKind::Super),
+        effect: CardEffect::UnlockService(ServiceKind::Epic),
     },
     CardSpec {
         id: "a2p",
