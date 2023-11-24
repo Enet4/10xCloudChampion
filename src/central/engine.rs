@@ -392,6 +392,7 @@ where
 
     /// Initiate request arrival events based on the current world state
     pub fn bootstrap_events(&mut self, state: &WorldState) {
+        let time = state.time;
         for user_spec in state.user_specs.iter() {
             // calculate demand based on base demand and cloud service price
             let service = match user_spec.service {
@@ -403,7 +404,7 @@ where
 
             let demand = service.calculate_demand(state.demand);
             let duration = self.gen.next_request(demand);
-            let timestamp = duration as u64;
+            let timestamp = time + duration as u64;
             let amount = 1;
             self.queue.push(RequestEvent::new_arrived(
                 timestamp,
@@ -417,6 +418,7 @@ where
 
     /// Initiate request arrival events for the given cloud user specification
     pub fn bootstrap_events_for(&mut self, state: &WorldState, user_spec: &CloudUserSpec) {
+        let time = state.time;
         // calculate demand based on base demand and cloud service price
         let service = match user_spec.service {
             crate::ServiceKind::Base => &state.base_service,
@@ -428,7 +430,7 @@ where
         let demand = service.calculate_demand(state.demand);
         let amount = 1;
         let duration = self.gen.next_request(demand);
-        let timestamp = duration as u64;
+        let timestamp = time + duration as u64;
         self.queue.push(RequestEvent::new_arrived(
             timestamp,
             Some(user_spec.id),
@@ -442,6 +444,16 @@ where
     pub fn update(&mut self, state: &mut WorldState, time: Time) {
         // process events until the given time
         while let Some(next_event_time) = self.queue.next_event_time() {
+            // add a safety net from events
+            // which are in the past but were not consumed
+            if next_event_time < self.state.time {
+                gloo_console::debug!(
+                    "Dropped past event with timestamp",
+                    next_event_time,
+                    "(this could be a bug)"
+                );
+                continue;
+            }
             if next_event_time > time {
                 break;
             }
