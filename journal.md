@@ -135,3 +135,12 @@ Worked on main menu a bit more,
 including warning the player if the browser can't save the game.
 Changed costs substantially.
 Adjusted demand calculation and card conditions.
+
+## Day 17: 2023-11-24
+
+Fixed serious bugs, one in event bootstrapping and the other one in checking whether a card was used.
+Adjusted cards and hardware costs & values.
+Tweaked demand formula again.
+Implemented card effects for unlocking multiple nodes, racks, etc.
+Tweaked price changing UI, but more changes may be needed 
+Added more cards and card conditions.
