@@ -91,6 +91,10 @@ pub enum CardCondition {
         /// at which this card should appear
         duration: u32,
     },
+    /// the player has at least N nodes
+    TotalCloudNodes(u32),
+    /// the player has at least N memory upgrades
+    TotalMemoryUpgrades(u32),
     /// the first node has been upgraded to maximum CPU
     FullyUpgradedNode,
     /// the first rack has been fully upgraded
@@ -146,6 +150,10 @@ impl CardCondition {
                     }
                 }
             }
+            Self::TotalCloudNodes(count) => state.nodes.len() >= *count as usize,
+            Self::TotalMemoryUpgrades(count) => state.nodes.iter()
+                .map(|node| node.ram_level as u32)
+                .sum::<u32>() >= *count,
             Self::FullyUpgradedNode => state.nodes[0].cpu_level == (CPU_LEVELS.len() - 1) as u8,
             Self::FullyUpgradedRack => {
                 state.nodes.len() == 4 && state.nodes[1].cpu_level == (CPU_LEVELS.len() - 1) as u8
