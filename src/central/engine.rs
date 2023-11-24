@@ -24,14 +24,14 @@ pub static CPU_LEVELS: [(u32, u32, Money); 11] = [
     (1, 2, Money::dollars(0)),
     (2, 2, Money::dollars(60)),
     (3, 2, Money::dollars(180)),
-    (4, 2, Money::dollars(400)),
+    (4, 3, Money::dollars(400)),
     (6, 3, Money::dollars(1_000)),
-    (8, 3, Money::dollars(2_400)),
-    (16, 4, Money::dollars(3_800)),
+    (8, 4, Money::dollars(2_200)),
+    (16, 4, Money::dollars(3_600)),
     (24, 5, Money::dollars(5_500)),
     (32, 6, Money::dollars(9_000)),
-    (48, 8, Money::dollars(16_000)),
-    (64, 10, Money::dollars(32_000)),
+    (48, 7, Money::dollars(15_500)),
+    (64, 8, Money::dollars(30_000)),
 ];
 
 /// all levels of RAM that can be purchased and their base cost,
@@ -61,10 +61,10 @@ pub static CACHE_LEVELS: [(f32, f32); 5] =
 /// where 1 means full cost.
 pub static SOFTWARE_LEVELS: [(f64, f64); 5] = [
     (1., 1.),
-    (0.9, 0.95),
-    (0.6, 0.75),
-    (0.25, 0.5),
-    (0.03125, 0.125),
+    (0.9375, 0.96875),
+    (0.625, 0.75),
+    (0.3125, 0.625),
+    (0.0390625, 0.125),
 ];
 
 /// The electricity cost in Wattever
@@ -94,18 +94,18 @@ pub static BASE_MEMORY_RESERVE: Memory = Memory::mb(32);
 /// amount of memory that all each cloud node must reserve
 /// to provide the super cloud service tier,
 /// before modifiers
-pub static SUPER_MEMORY_RESERVE: Memory = Memory::mb(128);
+pub static SUPER_MEMORY_RESERVE: Memory = Memory::mb(256);
 /// amount of memory that all each cloud node must reserve
 /// to provide the epic cloud service tier,
 /// before modifiers
-pub static EPIC_MEMORY_RESERVE: Memory = Memory::gb(2);
+pub static EPIC_MEMORY_RESERVE: Memory = Memory::gb(4);
 /// amount of memory that all each cloud node must reserve
 /// to provide the awesome cloud service tier,
 /// before modifiers
-pub static AWESOME_MEMORY_RESERVE: Memory = Memory::gb(16);
+pub static AWESOME_MEMORY_RESERVE: Memory = Memory::gb(32);
 
 /// the threshold of base demand at which DoS attacks will emerge
-pub static DEMAND_DOS_THRESHOLD: f32 = 250.0;
+pub static DEMAND_DOS_THRESHOLD: f32 = 2500.0;
 
 /// time period after which base demand increases a small bit
 pub static INCREASE_DEMAND_PERIOD: u64 = 150_000;
@@ -480,7 +480,7 @@ where
         // check whether to increase demand from time passing by
         if time / INCREASE_DEMAND_PERIOD - state.time / INCREASE_DEMAND_PERIOD > 0 {
             // increase demand a tiny bit
-            state.demand += 0.125;
+            state.demand += 0.25;
             gloo_console::debug!("Demand increased to ", state.demand);
         }
 
