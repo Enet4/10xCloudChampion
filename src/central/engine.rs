@@ -386,9 +386,15 @@ where
             CardEffect::MoreCaching => {
                 state.cache_level += 1;
             }
-            CardEffect::UnlockMultiNodes => todo!(),
-            CardEffect::UnlockMultiRacks => todo!(),
-            CardEffect::UnlockMultiDatacenters => todo!(),
+            CardEffect::UnlockMultiNodes => {
+                state.can_buy_nodes = true;
+            },
+            CardEffect::UnlockMultiRacks => {
+                state.can_buy_racks = true; 
+            }
+            CardEffect::UnlockMultiDatacenters => {
+                state.can_buy_datacenters = true;
+            }
         }
     }
 
