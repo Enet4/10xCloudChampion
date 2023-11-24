@@ -446,7 +446,7 @@ where
         while let Some(next_event_time) = self.queue.next_event_time() {
             // add a safety net from events
             // which are in the past but were not consumed
-            if next_event_time < self.state.time {
+            if next_event_time < state.time {
                 gloo_console::debug!(
                     "Dropped past event with timestamp",
                     next_event_time,
