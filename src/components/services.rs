@@ -117,16 +117,24 @@ impl Component for CloudService {
                 play_zip_click();
                 // based on current price, decide how to lower it
                 let new_price;
-                if price <= Money::zero() {
-                    new_price = Money::zero();
-                } else if price <= Money::millicents(20) {
+                if price <= Money::millicents(1) {
+                    new_price = Money::millicents(1);
+                } else if price < Money::millicents(20) {
                     new_price = price - Money::millicents(1);
-                } else if price <= Money::millicents(200) {
+                } else if price < Money::millicents(100) {
                     new_price = price - Money::millicents(5);
-                } else if price <= Money::millicents(2_000) {
+                } else if price < Money::millicents(500) {
+                    new_price = price - Money::millicents(10);
+                } else if price < Money::millicents(1_000) {
                     new_price = price - Money::millicents(100);
-                } else {
+                } else if price < Money::cents(10) {
                     new_price = price - Money::cents(1);
+                } else if price < Money::cents(50) {
+                    new_price = price - Money::cents(5);
+                } else if price < Money::dollars(2) {
+                    new_price = price - Money::cents(10);
+                } else {
+                    new_price = price - Money::cents(50);
                 }
 
                 on_price_change.emit(new_price);
@@ -141,15 +149,19 @@ impl Component for CloudService {
                 play_zip_click();
                 // based on current price, decide how to raise it
                 let new_price;
-                if price >= Money::dollars(20) {
-                    new_price = price + Money::dollars(1);
+                if price >= Money::dollars(50) {
+                    new_price = price + Money::cents(50);
                 } else if price >= Money::dollars(2) {
+                    new_price = price + Money::cents(10);
+                } else if price >= Money::cents(50) {
                     new_price = price + Money::cents(5);
-                } else if price >= Money::millicents(2_000) {
+                } else if price >= Money::cents(10) {
+                    new_price = price + Money::cents(1);
+                } else if price >= Money::cents(1) {
                     new_price = price + Money::millicents(100);
-                } else if price >= Money::millicents(200) {
-                    new_price = price + Money::millicents(50);
-                } else if price >= Money::millicents(50) {
+                } else if price >= Money::millicents(100) {
+                    new_price = price + Money::millicents(10);
+                } else if price >= Money::millicents(20) {
                     new_price = price + Money::millicents(5);
                 } else {
                     new_price = price + Money::millicents(1);
