@@ -241,6 +241,8 @@ where
                             id: id.clone(),
                             time,
                         });
+                        // keep cards_used sorted by ID
+                        state.cards_used.sort_unstable_by(|c1, c2| c1.id.cmp(&c2.id));
                     }
                     Err(_) => {
                         // warn
