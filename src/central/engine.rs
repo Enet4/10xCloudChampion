@@ -537,18 +537,36 @@ where
                     push_event(event.into_routed(0, node_num));
                 } else {
                     // route the request:
-                    // 1. add processing to a routing node
+                    // pick a routing node
                     let node_num = if state.routing_level == RoutingLevel::Distributed {
-                        self.gen.gen_range(0, node_count)
+                        loop {
+                            let n = self.gen.gen_range(0, node_count);
+                            let picked_node = state.node(n).unwrap();
+                            // if node is not busy, use it
+                            if picked_node.processing < picked_node.num_cores {
+                                break n;
+                            }
+                            // check if all nodes are busy
+                            if state
+                                .nodes
+                                .iter()
+                                .all(|node| node.processing >= node.num_cores)
+                            {
+                                // all nodes are busy, drop the request
+                                state.requests_dropped += event.amount as u64;
+                                return;
+                            }
+                            // otherwise, try again
+                        }
                     } else {
                         // always use the first one
                         // until the player gets the upgrade
                         0
                     };
-
+                    // add processing to the routing node
                     let node = state.node_mut(node_num).unwrap();
                     node.processing += 1;
-                    let duration = node.time_per_request_routing();
+                    let duration = node.time_per_request_routing() * event.amount;
 
                     // 2. push event to request routed
                     push_event(event.into_routed(duration, node_num));
