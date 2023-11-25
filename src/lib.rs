@@ -104,7 +104,9 @@ impl SampleGenerator {
     /// Demand is approximately the number of requests per second.
     pub fn next_request(&mut self, demand: f32) -> Time {
         let distribution = rand_distr::Exp::new(demand).unwrap();
-        (distribution.sample(&mut self.rng) * 1_000. * TIME_UNITS_PER_MILLISECOND as f32) as Time
+        ((distribution.sample(&mut self.rng) * 1_000. * TIME_UNITS_PER_MILLISECOND as f32) as Time)
+            // ~ 15 second max
+            .min(TIME_UNITS_PER_MILLISECOND as Time * 20_000)
     }
 
     /// Pick a number in the `(low..high)` range (excluding `high`).
