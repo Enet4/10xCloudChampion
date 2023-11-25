@@ -10,8 +10,8 @@ use crate::{CloudUserSpec, Cost, Memory, Money, Ops, ServiceKind};
 
 use super::{
     engine::{
-        CloudNode, AWESOME_MEMORY_RESERVE, BASE_MEMORY_RESERVE, ELECTRICITY_COST_LEVELS,
-        EPIC_MEMORY_RESERVE, SOFTWARE_LEVELS, SUPER_MEMORY_RESERVE,
+        CloudNode, AWESOME_MEMORY_RESERVE, BASE_MEMORY_RESERVE, ELECTRICITY_BILL_PERIOD,
+        ELECTRICITY_COST_LEVELS, EPIC_MEMORY_RESERVE, SOFTWARE_LEVELS, SUPER_MEMORY_RESERVE,
     },
     queue::Time,
 };
@@ -275,7 +275,8 @@ impl WorldState {
     }
 
     pub fn is_powersaving(&self) -> bool {
-        self.electricity.total_due > Money::dollars(24)
+        self.electricity.total_due > Money::dollars(10)
+            && self.time - self.electricity.last_bill_time >= ELECTRICITY_BILL_PERIOD
     }
 }
 
