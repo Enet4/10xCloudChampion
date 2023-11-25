@@ -140,7 +140,7 @@ pub static ALL_CARDS: &'static [CardSpec] = &[
     },
     CardSpec {
         id: "b4",
-        title: "Seamless Monetary Volition",
+        title: "Seamless monetary volition",
         description: "All awesome ops give you an extra $0.05",
         cost: Cost::awesome_ops(56_000).and(Cost::epic_ops(128_000)),
         condition: CardCondition::TotalAwesomeOps(Ops(7_777)),
