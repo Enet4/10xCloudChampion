@@ -234,10 +234,7 @@ pub static ALL_CARDS: &'static [CardSpec] = &[
         title: "Blame caching",
         description: "Regain your clients' trust",
         cost: Cost::dollars(2_000),
-        condition: CardCondition::TimeAfterCard {
-            card: ID_MORE_CACHING,
-            duration: 350_000,
-        },
+        condition: CardCondition::RequestsDropped(500),
         effect: CardEffect::AddPublicity(64.),
     },
     CardSpec {
