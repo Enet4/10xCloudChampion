@@ -33,7 +33,7 @@ pub static ALL_CARDS: &'static [CardSpec] = &[
         title: "Super Ops",
         description: "Next generation Cloud services",
         cost: Cost::base_ops(4_000).and(Cost::dollars(200)),
-        condition: CardCondition::TotalBaseOps(Ops(1_000)),
+        condition: CardCondition::TotalBaseOps(Ops(1_500)),
         effect: CardEffect::UnlockService(ServiceKind::Super),
     },
     CardSpec {
@@ -85,7 +85,7 @@ pub static ALL_CARDS: &'static [CardSpec] = &[
         cost: Cost::awesome_ops(64),
         condition: CardCondition::TimeAfterCard {
             card: ID_AWESOME_OPS_UNLOCKED,
-            duration: 200_000,
+            duration: 500_000,
         },
         effect: CardEffect::PublishService(ServiceKind::Awesome),
     },
@@ -137,6 +137,14 @@ pub static ALL_CARDS: &'static [CardSpec] = &[
         cost: Cost::epic_ops(12_800).and(Cost::super_ops(12_800)),
         condition: CardCondition::TotalEpicOps(Ops(2_000)),
         effect: CardEffect::UpgradeEntitlements(ServiceKind::Epic, Money::dec_cents(5)),
+    },
+    CardSpec {
+        id: "b4",
+        title: "Seamless Monetary Volition",
+        description: "All awesome ops give you an extra $0.05",
+        cost: Cost::awesome_ops(56_000).and(Cost::epic_ops(128_000)),
+        condition: CardCondition::TotalAwesomeOps(Ops(7_777)),
+        effect: CardEffect::UpgradeEntitlements(ServiceKind::Awesome, Money::cents(5)),
     },
     // --- caching cards ---
     CardSpec {
