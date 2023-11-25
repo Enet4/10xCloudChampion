@@ -142,5 +142,13 @@ Fixed serious bugs, one in event bootstrapping and the other one in checking whe
 Adjusted cards and hardware costs & values.
 Tweaked demand formula again.
 Implemented card effects for unlocking multiple nodes, racks, etc.
-Tweaked price changing UI, but more changes may be needed 
+Tweaked price changing UI, but more changes may be needed
 Added more cards and card conditions.
+
+## Day 18: 2023-11-25
+
+Implemented routing levels and bad request protection.
+Fixed price changing UI for good.
+Tweak demand formula yet again.
+Implemented powersaving, for when the player forgets to pay the bills.
+Adjusted cards.
