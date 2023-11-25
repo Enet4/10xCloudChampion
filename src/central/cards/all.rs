@@ -1,7 +1,10 @@
 //! All card entries encoded here
 //!
 
-use crate::{CloudClientSpec, Cost, Money, Ops, ServiceKind};
+use crate::{
+    central::{engine::DEMAND_DOS_THRESHOLD, state::RoutingLevel},
+    CloudClientSpec, Cost, Money, Ops, ServiceKind,
+};
 
 use super::{CardCondition, CardEffect, CardSpec};
 
@@ -310,6 +313,31 @@ pub static ALL_CARDS: &'static [CardSpec] = &[
         condition: CardCondition::TotalAwesomeOps(Ops(700_000)),
         effect: CardEffect::SetElectricityCostLevel(7),
     },
+    // --- bad request protection cards ---
+    CardSpec {
+        id: "f0",
+        title: "Request anomaly monitoring",
+        description: "Detect obvious cases of malicious requests",
+        cost: Cost::base_ops(200).and(Cost::super_ops(200)),
+        condition: CardCondition::Demand(DEMAND_DOS_THRESHOLD + 0.25),
+        effect: CardEffect::UpgradeSpamProtection(0.5),
+    },
+    CardSpec {
+        id: "f1",
+        title: "Adversarial generative spam network detection",
+        description: "Detect more cases of DoS attacks",
+        cost: Cost::super_ops(4_000).and(Cost::epic_ops(2_000)),
+        condition: CardCondition::RequestsFailed(20_000),
+        effect: CardEffect::UpgradeSpamProtection(0.875),
+    },
+    CardSpec {
+        id: "f2",
+        title: "Universal introspective malice correction",
+        description: "Eliminate bad requests",
+        cost: Cost::epic_ops(40_000).and(Cost::awesome_ops(20_000)),
+        condition: CardCondition::RequestsFailed(1_000_000),
+        effect: CardEffect::UpgradeSpamProtection(1.),
+    },
     // --- informative cards ---
     CardSpec {
         id: "i0",
@@ -332,11 +360,9 @@ pub static ALL_CARDS: &'static [CardSpec] = &[
         id: "n2",
         title: "Improved routing",
         description: "Distribute routing costs to all nodes",
-        condition: CardCondition:: Test { // TODO
-            test: false,
-        },
+        condition: CardCondition::TotalCloudNodes(3),
         cost: Cost::dollars(100).and(Cost::super_ops(800)),
-        effect: CardEffect::Nothing, // TODO
+        effect: CardEffect::UpgradeRoutingLevel(RoutingLevel::Distributed),
     },
     CardSpec {
         id: "n3",
@@ -353,6 +379,14 @@ pub static ALL_CARDS: &'static [CardSpec] = &[
         condition: CardCondition::FullyUpgradedDatacenter,
         cost: Cost::dollars(1_000).and(Cost::super_ops(30_000)),
         effect: CardEffect::UnlockMultiDatacenters,
+    },
+    CardSpec {
+        id: "n6",
+        title: "Spectral bandwidth 55G routing",
+        description: "Eliminate all routing costs",
+        condition: CardCondition::TotalCloudNodes(36),
+        cost: Cost::dollars(10_000).and(Cost::awesome_ops(8_000)),
+        effect: CardEffect::UpgradeRoutingLevel(RoutingLevel::NoRoutingCost),
     },
     // --- software upgrade cards ---
     CardSpec {

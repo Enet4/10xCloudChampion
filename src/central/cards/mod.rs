@@ -2,7 +2,7 @@ use crate::{
     CloudClientSpec, Cost, Money, Ops, ServiceKind, WorldState, TIME_UNITS_PER_MILLISECOND,
 };
 
-use super::engine::CPU_LEVELS;
+use super::{engine::CPU_LEVELS, state::RoutingLevel};
 
 pub mod all;
 
@@ -81,6 +81,10 @@ pub enum CardCondition {
     AvailableAwesomeOps(Ops),
     /// at least N requests have been dropped
     RequestsDropped(u32),
+    /// at least N requests have failed
+    RequestsFailed(u32),
+    /// the player has reached a certain baseline demand level
+    Demand(f32),
     /// the player received their first electricity bill
     FirstBillArrived,
     /// appear N ticks after another card has been used
@@ -136,7 +140,9 @@ impl CardCondition {
             Self::AvailableEpicOps(ops) => state.epic_service.available >= *ops,
             Self::TotalAwesomeOps(ops) => state.awesome_service.total >= *ops,
             Self::AvailableAwesomeOps(ops) => state.awesome_service.available >= *ops,
+            Self::Demand(demand) => state.demand >= *demand,
             Self::RequestsDropped(count) => state.requests_dropped >= *count as u64,
+            Self::RequestsFailed(count) => state.requests_failed >= *count as u64,
             Self::FirstBillArrived => state.electricity.last_bill_time > 0,
             Self::TimeAfterCard { card, duration } => {
                 match state
@@ -151,9 +157,14 @@ impl CardCondition {
                 }
             }
             Self::TotalCloudNodes(count) => state.nodes.len() >= *count as usize,
-            Self::TotalMemoryUpgrades(count) => state.nodes.iter()
-                .map(|node| node.ram_level as u32)
-                .sum::<u32>() >= *count,
+            Self::TotalMemoryUpgrades(count) => {
+                state
+                    .nodes
+                    .iter()
+                    .map(|node| node.ram_level as u32)
+                    .sum::<u32>()
+                    >= *count
+            }
             Self::FullyUpgradedNode => state.nodes[0].cpu_level == (CPU_LEVELS.len() - 1) as u8,
             Self::FullyUpgradedRack => {
                 state.nodes.len() == 4 && state.nodes[1].cpu_level == (CPU_LEVELS.len() - 1) as u8
@@ -203,4 +214,8 @@ pub enum CardEffect {
     UnlockMultiDatacenters,
     /// Unlock demand estimate in business panel
     UnlockDemandEstimate,
+    /// Add protection from bad requests (detection rate)
+    UpgradeSpamProtection(f32),
+    /// Upgrade the routing implementation
+    UpgradeRoutingLevel(RoutingLevel),
 }

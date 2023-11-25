@@ -41,6 +41,10 @@ pub struct WorldState {
     /// (higher means more caching)
     pub cache_level: u8,
 
+    /// the routing level used for requests
+    #[serde(default, skip_serializing_if = "routing_level_default")]
+    pub routing_level: RoutingLevel,
+
     /// number of operation requests performed per player click
     pub ops_per_click: u32,
 
@@ -56,6 +60,11 @@ pub struct WorldState {
     /// the total number of requests dropped
     /// due to lack of system capacity
     pub requests_dropped: u64,
+
+    /// the total number of requests discarded
+    /// for being bad
+    #[serde(default, skip_serializing_if = "requests_failed_default")]
+    pub requests_failed: u64,
 
     /// the op counts of the awesome service
     pub awesome_service: ServiceInfo,
@@ -89,6 +98,10 @@ pub struct WorldState {
     #[serde(default, skip_serializing_if = "can_buy_default")]
     pub can_buy_datacenters: bool,
 
+    /// the rate at which to detect bad requests before routing them
+    #[serde(default, skip_serializing_if = "spam_protection_default")]
+    pub spam_protection: f32,
+
     /// the indices of the cards
     /// (per [`ALL_CARDS`](crate::central::cards::ALL_CARDS))
     /// already used,
@@ -96,8 +109,20 @@ pub struct WorldState {
     pub cards_used: Vec<UsedCard>,
 }
 
+fn routing_level_default(&routing_level: &RoutingLevel) -> bool {
+    routing_level == RoutingLevel::default()
+}
+
 fn can_buy_default(&b: &bool) -> bool {
     !b
+}
+
+fn requests_failed_default(&x: &u64) -> bool {
+    x == 0
+}
+
+fn spam_protection_default(&x: &f32) -> bool {
+    x == 0.
 }
 
 const LOCAL_STORAGE_KEY_NAME: &str = "10xCloudChampion_save";
@@ -248,6 +273,10 @@ impl WorldState {
             _ => unreachable!("base service should not be locked"),
         }
     }
+
+    pub(crate) fn is_powersaving(&self) -> bool {
+        self.electricity.total_due > Money::dollars(24)
+    }
 }
 
 impl Default for WorldState {
@@ -261,23 +290,51 @@ impl Default for WorldState {
             software_level: 0,
             cache_level: 0,
             ops_per_click: 1,
+            spam_protection: 0.0,
             base_service: ServiceInfo::new_private(Money::millicents(50)),
             super_service: ServiceInfo::new_locked(Money::dec_cents(5)),
             epic_service: ServiceInfo::new_locked(Money::cents(5)),
             awesome_service: ServiceInfo::new_locked(Money::dollars(1)),
             electricity: Default::default(),
             requests_dropped: 0,
+            requests_failed: 0,
             nodes: vec![CloudNode::new(0)],
             can_see_demand: false,
             can_buy_nodes: false,
             can_buy_racks: false,
             can_buy_datacenters: false,
+            routing_level: RoutingLevel::default(),
             user_specs: Default::default(),
             cards_used: Default::default(),
         }
     }
 }
 
+/// The different forms of request routing implemented.
+#[derive(Debug, Default, Copy, Clone, PartialEq, Serialize, Deserialize)]
+#[repr(u8)]
+pub enum RoutingLevel {
+    /// The first node of the first rack handles all the routing.
+    #[default]
+    MainNode = 0,
+    /// Routing costs are distributed among all nodes.
+    Distributed = 1,
+    /// All routing costs removed.
+    NoRoutingCost = 2,
+}
+
+impl RoutingLevel {
+    /// Get the highest routing level of the two.
+    pub fn max(self, other: Self) -> Self {
+        match (self, other) {
+            (Self::NoRoutingCost, _) | (_, Self::NoRoutingCost) => Self::NoRoutingCost,
+            (Self::Distributed, _) | (_, Self::Distributed) => Self::Distributed,
+            _ => Self::MainNode,
+        }
+    }
+}
+
+/// The record that a project card has been used, and when.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct UsedCard {
     pub id: Cow<'static, str>,

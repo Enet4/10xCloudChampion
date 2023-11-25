@@ -14,7 +14,7 @@ use crate::{
 use super::{
     cards::{all::ALL_CARDS, CardEffect, CardSpec},
     queue::{RequestEvent, RequestEventQueue, RequestEventStage, Time},
-    state::UsedCard,
+    state::{RoutingLevel, UsedCard},
 };
 
 /// all levels of CPU upgrades
@@ -242,7 +242,9 @@ where
                             time,
                         });
                         // keep cards_used sorted by ID
-                        state.cards_used.sort_unstable_by(|c1, c2| c1.id.cmp(&c2.id));
+                        state
+                            .cards_used
+                            .sort_unstable_by(|c1, c2| c1.id.cmp(&c2.id));
                     }
                     Err(_) => {
                         // warn
@@ -388,12 +390,18 @@ where
             }
             CardEffect::UnlockMultiNodes => {
                 state.can_buy_nodes = true;
-            },
+            }
             CardEffect::UnlockMultiRacks => {
-                state.can_buy_racks = true; 
+                state.can_buy_racks = true;
             }
             CardEffect::UnlockMultiDatacenters => {
                 state.can_buy_datacenters = true;
+            }
+            CardEffect::UpgradeSpamProtection(rate) => {
+                state.spam_protection = state.spam_protection.max(*rate);
+            }
+            CardEffect::UpgradeRoutingLevel(level) => {
+                state.routing_level = state.routing_level.max(*level);
             }
         }
     }
@@ -523,10 +531,20 @@ where
                 if node_count == 1 {
                     // immediately route to the only node
                     push_event(event.into_routed(0, 0));
+                } else if state.routing_level == RoutingLevel::NoRoutingCost {
+                    // immediately route to a random node
+                    let node_num = self.gen.gen_range(0, node_count);
+                    push_event(event.into_routed(0, node_num));
                 } else {
                     // route the request:
-                    // 1. add processing to routing node
-                    let node_num = self.gen.gen_range(0, node_count);
+                    // 1. add processing to a routing node
+                    let node_num = if state.routing_level == RoutingLevel::Distributed {
+                        self.gen.gen_range(0, node_count)
+                    } else {
+                        // always use the first one
+                        // until the player gets the upgrade
+                        0
+                    };
 
                     let node = state.node_mut(node_num).unwrap();
                     node.processing += 1;
@@ -563,10 +581,6 @@ where
                             ));
                         } else if spec.trial_time > 0 {
                             // trial period over
-                            gloo_console::info!(
-                                "Trial period over for user spec ended: ",
-                                user_spec_id
-                            );
                             should_drop_spec = true;
                         }
 
@@ -583,19 +597,29 @@ where
             RequestEventStage::RequestRouted { node_num } => {
                 let software_level = state.software_level;
                 let cache_level = state.cache_level;
+                let powersave = state.is_powersaving();
                 let routing_needed = state.nodes.len() > 1;
                 let Some(routing_node) = state.node_mut(node_num) else {
                     return;
                 };
 
-                // TODO check powersaving mode
-
                 // 1. if required, decrement processing on the routing node
                 if routing_needed {
                     routing_node.processing -= 1;
                     // add small electricity cost
-                    state.electricity.add_consumption(0.01);
+                    if !powersave {
+                        state.electricity.add_consumption(0.01);
+                    }
                 }
+
+                // spam detection
+                if event.bad && state.spam_protection > 0. {
+                    let detected = self.gen.gen_bool(state.spam_protection);
+                    if detected {
+                        // dropped intentionally
+                        return;
+                    }
+                };
 
                 // 2. pick a request processing node
                 let node_id = self.gen.gen_range(0, state.nodes.len() as u32);
@@ -625,10 +649,20 @@ where
                 node.ram_usage += mem_required;
 
                 // 6. if node has a CPU available,
-                if node.processing < node.num_cores {
+                let cores_available = if powersave {
+                    (node.num_cores / 4).max(1)
+                } else {
+                    node.num_cores
+                };
+                if node.processing < cores_available {
                     // calculate time to process the request
                     let mut duration =
                         node.time_per_request(event.service, software_level) * event.amount;
+
+                    // if in powersave mode, make it slower
+                    if powersave {
+                        duration *= 4;
+                    }
 
                     // test whether this request will hit the cache
                     let cache_rate = CACHE_LEVELS[cache_level as usize].1;
@@ -733,6 +767,10 @@ where
                 if revenue > Money::zero() {
                     state.funds += revenue;
                     state.earned += revenue;
+                }
+                // apply bad request count
+                if event.bad {
+                    state.requests_failed += 1;
                 }
             }
         }
@@ -867,7 +905,7 @@ impl CloudNode {
     }
 
     pub(crate) fn time_per_request_routing(&self) -> u32 {
-        200 / self.cpu_speed
+        512 / self.cpu_speed
     }
 
     pub fn next_cpu_upgrade_cost(&self) -> Option<Money> {
