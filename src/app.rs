@@ -390,6 +390,7 @@ impl Component for Game {
         let (cpu_load, mem_load) = self.state.total_processing();
         let mem_total: Memory = self.state.nodes.iter().map(|n| n.ram_capacity).sum();
 
+        let powersave = self.state.is_powersaving();
         let nodes: Html = self
             .state
             .nodes
@@ -416,6 +417,7 @@ impl Component for Game {
                 html! {
                     <Node
                         cpus={node.num_cores} ram={node.ram_capacity}
+                        {powersave}
                         {cpu_upgrade_cost}
                         {ram_upgrade_cost}
                         {cpu_upgrade_disabled}

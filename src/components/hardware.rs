@@ -37,6 +37,8 @@ pub struct NodeProps {
     pub cpus: u32,
     /// RAM available in the node
     pub ram: Memory,
+    /// whether the node is in powersave mode
+    pub powersave: bool,
     /// the cost for the next CPU upgrade
     /// (or None if no upgrade is available)
     pub cpu_upgrade_cost: Option<Money>,
@@ -83,14 +85,10 @@ pub fn Node(props: &NodeProps) -> Html {
     } else {
         "false"
     };
+
     html! {
         <div class="node-container">
-            <div class="node">
-                // decorative lines
-                <div class="lines" />
-                // blinking light
-                <div class={classes!["led", "led-ok"]} />
-            </div>
+            <CloudNodeIcon powersave={props.powersave} />
             <span class="specs">{props.cpus} {" "} {cores} {", "} {props.ram} {" RAM"}</span>
             <div class="upgrade-container">
             if let Some(cost) = props.cpu_upgrade_cost {
@@ -106,6 +104,29 @@ pub fn Node(props: &NodeProps) -> Html {
                 </div>
             }
             </div>
+        </div>
+    }
+}
+
+#[derive(Debug, PartialEq, Properties)]
+pub struct CloudNodeIconProps {
+    pub powersave: bool,
+}
+
+#[function_component]
+pub fn CloudNodeIcon(props: &CloudNodeIconProps) -> Html {
+    let node_classes = if props.powersave {
+        classes!["led", "led-powersave"]
+    } else {
+        classes!["led", "led-ok"]
+    };
+
+    html! {
+        <div class="node">
+            // decorative lines
+            <div class="lines" />
+            // blinking light
+            <div class={node_classes} />
         </div>
     }
 }

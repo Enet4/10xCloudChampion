@@ -274,7 +274,7 @@ impl WorldState {
         }
     }
 
-    pub(crate) fn is_powersaving(&self) -> bool {
+    pub fn is_powersaving(&self) -> bool {
         self.electricity.total_due > Money::dollars(24)
     }
 }
