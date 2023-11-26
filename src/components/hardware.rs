@@ -167,9 +167,17 @@ pub fn Rack(props: &RackProps) -> Html {
         };
         let onclick = move |_| on_player_action.emit(action.clone());
         html! {
-            <button {onclick} {disabled}>
-                {"Buy node"}
-            </button>
+            <>
+                <button {onclick} disabled={disabled}>
+                    {"Buy node"}
+                </button>
+                {" "}
+                if props.can_buy_racks {
+                    <span class="small">{BARE_NODE_COST.to_string()}</span>
+                } else {
+                    <span class="small">{UPGRADED_NODE_COST.to_string()}</span>
+                }
+            </>
         }
     } else {
         html! {}
