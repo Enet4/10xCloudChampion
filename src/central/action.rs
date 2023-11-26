@@ -34,6 +34,9 @@ pub enum PlayerAction {
     /// Acquire a new cloud node
     AddNode,
 
+    /// Acquire a new fully upgraded cloud node
+    AddUpgradedNode,
+
     /// Use a card by applying its effect.
     ///
     /// Knowing the effects of the card requires

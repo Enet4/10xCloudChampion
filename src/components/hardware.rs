@@ -2,7 +2,12 @@
 
 use yew::prelude::*;
 
-use crate::{audio::play_zip_click, components::load_bar::LoadBar, Memory, Money};
+use crate::{
+    audio::play_zip_click,
+    central::engine::{CloudNode, BARE_NODE_COST, UPGRADED_NODE_COST},
+    components::load_bar::LoadBar,
+    Memory, Money, PlayerAction,
+};
 
 #[derive(Debug, PartialEq, Properties)]
 pub struct PowerProps {
@@ -133,15 +138,85 @@ pub fn CloudNodeIcon(props: &CloudNodeIconProps) -> Html {
 
 #[derive(Debug, PartialEq, Properties)]
 pub struct RackProps {
-    pub children: Html,
+    /// whether the ability to purchase more nodes is unlocked
+    pub can_buy_nodes: bool,
+    /// whether the ability to purchase more racks is unlocked
+    /// (means all node purchases are for fully upgraded nodes)
+    pub can_buy_racks: bool,
+    pub funds: Money,
+    pub nodes: Vec<CloudNode>,
+    pub powersave: bool,
+    pub on_player_action: Callback<PlayerAction>,
 }
+
+const RACK_CAPACITY: u32 = 4;
 
 /// A rack of nodes
 #[function_component]
 pub fn Rack(props: &RackProps) -> Html {
+    let can_buy_more_nodes = props.can_buy_nodes && (props.nodes.len() as u32) < RACK_CAPACITY;
+    let purchase_button = if can_buy_more_nodes {
+        let on_player_action = props.on_player_action.clone();
+        let (action, disabled) = if props.can_buy_racks {
+            (PlayerAction::AddNode, props.funds < BARE_NODE_COST)
+        } else {
+            (
+                PlayerAction::AddUpgradedNode,
+                props.funds < UPGRADED_NODE_COST,
+            )
+        };
+        let onclick = move |_| on_player_action.emit(action.clone());
+        html! {
+            <button {onclick} {disabled}>
+                {"Buy node"}
+            </button>
+        }
+    } else {
+        html! {}
+    };
+    let powersave = props.powersave;
+
+    let nodes: Html = props
+        .nodes
+        .iter()
+        .map(|node| {
+            let cpu_upgrade_cost = node.next_cpu_upgrade_cost();
+            let ram_upgrade_cost = node.next_ram_upgrade_cost();
+            let cpu_upgrade_disabled = cpu_upgrade_cost
+                .map(|cost| props.funds < cost)
+                .unwrap_or_default();
+            let ram_upgrade_disabled = ram_upgrade_cost
+                .map(|cost| props.funds < cost)
+                .unwrap_or_default();
+            let on_cpu_upgrade = {
+                let on_player_action = props.on_player_action.clone();
+                let node = node.id;
+                move |_| on_player_action.emit(PlayerAction::UpgradeCpu { node })
+            };
+            let on_ram_upgrade = {
+                let on_player_action = props.on_player_action.clone();
+                let node = node.id;
+                move |_| on_player_action.emit(PlayerAction::UpgradeRam { node })
+            };
+            html! {
+                <Node
+                    cpus={node.num_cores} ram={node.ram_capacity}
+                    {powersave}
+                    {cpu_upgrade_cost}
+                    {ram_upgrade_cost}
+                    {cpu_upgrade_disabled}
+                    {ram_upgrade_disabled}
+                    {on_cpu_upgrade}
+                    {on_ram_upgrade}
+                    />
+            }
+        })
+        .collect();
+
     html! {
         <div class="rack">
-            {props.children.clone()}
+            {nodes}
+            {purchase_button}
         </div>
     }
 }

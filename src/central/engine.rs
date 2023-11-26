@@ -23,15 +23,15 @@ use super::{
 pub static CPU_LEVELS: [(u32, u32, Money); 11] = [
     (1, 2, Money::dollars(0)),
     (2, 2, Money::dollars(60)),
-    (3, 2, Money::dollars(180)),
-    (4, 3, Money::dollars(400)),
-    (6, 3, Money::dollars(1_000)),
-    (8, 4, Money::dollars(2_200)),
-    (16, 4, Money::dollars(3_600)),
-    (24, 5, Money::dollars(5_500)),
-    (32, 6, Money::dollars(9_000)),
-    (48, 7, Money::dollars(15_500)),
-    (64, 8, Money::dollars(30_000)),
+    (3, 2, Money::dollars(160)),
+    (4, 3, Money::dollars(360)),
+    (6, 3, Money::dollars(850)),
+    (8, 4, Money::dollars(1_980)),
+    (16, 4, Money::dollars(3_000)),
+    (24, 5, Money::dollars(5_400)),
+    (32, 6, Money::dollars(8_200)),
+    (48, 7, Money::dollars(14_000)),
+    (64, 8, Money::dollars(25_000)),
 ];
 
 /// all levels of RAM that can be purchased and their base cost,
@@ -43,12 +43,20 @@ pub static RAM_LEVELS: [(Memory, Money); 11] = [
     (Memory::gb(2), Money::dollars(100)),
     (Memory::gb(4), Money::dollars(180)),
     (Memory::gb(8), Money::dollars(320)),
-    (Memory::gb(16), Money::dollars(600)),
-    (Memory::gb(24), Money::dollars(920)),
-    (Memory::gb(32), Money::dollars(1_400)),
-    (Memory::gb(48), Money::dollars(2_600)),
-    (Memory::gb(64), Money::dollars(4_000)),
+    (Memory::gb(16), Money::dollars(660)),
+    (Memory::gb(24), Money::dollars(900)),
+    (Memory::gb(32), Money::dollars(1_200)),
+    (Memory::gb(48), Money::dollars(2_000)),
+    (Memory::gb(64), Money::dollars(3_600)),
 ];
+
+/// The cost of a bare node
+pub const BARE_NODE_COST: Money = Money::dollars(2_000);
+
+/// The cost of a fully upgraded node
+pub const UPGRADED_NODE_COST: Money = BARE_NODE_COST
+    .plus(Money::dollars(59_000))
+    .plus(Money::dollars(9_000));
 
 /// All levels of caching,
 /// namely the memory reserve multiplier (0)
@@ -217,8 +225,32 @@ where
                 state.spent += cost;
             }
             PlayerAction::AddNode => {
+                // check cost
+                if state.funds < BARE_NODE_COST {
+                    gloo_console::warn!("Not enough funds to purchase a new node");
+                    return;
+                }
+                // note: whether there is space for the new node
+                // is determined elsewhere
+
+                state.funds -= BARE_NODE_COST;
+
                 let id = state.nodes.len() as u32;
                 state.nodes.push(CloudNode::new(id));
+            }
+            PlayerAction::AddUpgradedNode => {
+                // check cost
+                if state.funds < UPGRADED_NODE_COST {
+                    gloo_console::warn!("Not enough funds to purchase a new node");
+                    return;
+                }
+                // note: whether there is space for the new node
+                // is determined elsewhere
+
+                state.funds -= UPGRADED_NODE_COST;
+
+                let id = state.nodes.len() as u32;
+                state.nodes.push(CloudNode::new_fully_upgraded(id));
             }
             PlayerAction::UseCard { id } => {
                 // 1. find the card
