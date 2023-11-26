@@ -820,13 +820,14 @@ where
                 node.ram_usage -= ram_required;
 
                 // 5. if there are routing requests waiting
-                if (node.id == 0 || routing_level == RoutingLevel::Distributed) {
-                    if let Some(request) = self.waiting_queue.pop_front() {
-                        // pop one and schedule a new request routed event
-                        let node_count = state.nodes.len() as u32;
-                        // TODO
-                    }
-                // 6. else if there are requests waiting
+                if !self.waiting_queue.is_empty()
+                    && (node.id == 0 || routing_level == RoutingLevel::Distributed)
+                {
+                    let request = self.waiting_queue.pop_front().unwrap();
+                    // pop one and schedule a new request routed event
+                    let node_count = state.nodes.len() as u32;
+                    // TODO
+                    // 6. else if there are requests waiting
                 } else if let Some(request) = node.requests.pop_front() {
                     // pop one and schedule a new request processed event
                     let duration =
