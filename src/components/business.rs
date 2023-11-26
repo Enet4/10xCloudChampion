@@ -67,11 +67,10 @@ pub fn Business(props: &BusinessProps) -> Html {
             play_zip_click();
             onclick.emit(())
         };
-        let enabled = if props.can_pay_bill { "true" } else { "false" };
         html! {
             <p>
                 <span>{"Electricity bill: "}</span> {props.electricity_bill.into_cent_precision().to_string()}
-                <button {enabled} {onclick}>{"Pay"}</button>
+                <button disabled={!props.can_pay_bill} {onclick}>{"Pay"}</button>
             </p>
         }
     } else {
