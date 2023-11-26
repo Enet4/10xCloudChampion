@@ -294,6 +294,11 @@ impl std::iter::Sum for Money {
 
 impl fmt::Display for Money {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        if *self < Money::zero() {
+            f.write_str("-")?;
+            return (Money::zero() - *self).fmt(f);
+        }
+
         let dollars = self.0 / 100_000;
         let millicents = self.0 % 100_000;
         if millicents == 0 && dollars > 1_000 && dollars % 100 == 0 {
