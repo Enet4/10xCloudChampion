@@ -296,7 +296,16 @@ impl fmt::Display for Money {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let dollars = self.0 / 100_000;
         let millicents = self.0 % 100_000;
-        if millicents == 0 {
+        if millicents == 0 && dollars > 1_000 && dollars % 100 == 0 {
+            // no fraction smaller than $100, show in thousands
+            let kdollars = dollars / 1_000;
+            let rest_dollars = dollars % 1_000 / 100;
+            if rest_dollars == 0 {
+                write!(f, "${}k", Separating(kdollars))
+            } else {
+                write!(f, "${}.{:01}k", Separating(kdollars), rest_dollars)
+            }
+        } else if millicents == 0 {
             write!(f, "${}", Separating(dollars))
         } else {
             if self.0 % 1_000 == 0 {
@@ -624,7 +633,8 @@ mod tests {
         assert_eq!(money2, Money::millicents(900_000_000));
         assert_eq!(money2.into_cent_precision(), Money::dollars(9_000));
         assert_eq!(money2.into_dollar_precision(), money2);
-        assert_eq!(money2.to_string(), "$9\u{2006}000");
+        assert_eq!(money2.to_string(), "$9k");
+        assert_eq!((money2 + Money::dollars(200)).to_string(), "$9.2k");
 
         let money3 = Money::millicents(5);
         assert_eq!(money3.to_dollars(), 0);
