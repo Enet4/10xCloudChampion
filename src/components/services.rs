@@ -202,8 +202,8 @@ fn lower_price(price: Money) -> Money {
 
 /// based on current price, decide how to raise it
 fn raise_price(price: Money) -> Money {
-    if price >= Money::dollars(50) {
-        Money::dollars(50)
+    if price >= Money::dollars(25) {
+        Money::dollars(25)
     } else if price >= Money::dollars(2) {
         price + Money::cents(50)
     } else if price >= Money::dollars(1) {
