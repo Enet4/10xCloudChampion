@@ -347,7 +347,7 @@ pub static ALL_CARDS: &'static [CardSpec] = &[
     CardSpec {
         id: "i0",
         title: "Market introspection",
-        description: "Estimate the demand for your service",
+        description: "Estimate the visibility of your services",
         cost: Cost::base_ops(500),
         condition: CardCondition::TotalBaseOps(Ops(200)),
         effect: CardEffect::UnlockDemandEstimate,
