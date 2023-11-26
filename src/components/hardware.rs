@@ -172,7 +172,7 @@ pub fn Rack(props: &RackProps) -> Html {
                     {"Buy node"}
                 </button>
                 {" "}
-                if props.can_buy_racks {
+                if !props.can_buy_racks {
                     <span class="small">{BARE_NODE_COST.to_string()}</span>
                 } else {
                     <span class="small">{UPGRADED_NODE_COST.to_string()}</span>
