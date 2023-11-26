@@ -87,7 +87,7 @@ pub fn Business(props: &BusinessProps) -> Html {
             </p>
             <p>
                 if let Some(demand) = props.demand {
-                    <><span>{"Demand: "}</span> {format!("{:.1}%", demand)} <br/></>
+                    <><span>{"Visibility: "}</span> {format!("{:.2}%", demand / 100.)} <br/></>
                 }
             </p>
             {electricity}
