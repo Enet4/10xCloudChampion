@@ -31,8 +31,14 @@ pub struct WorldState {
     pub earned: Money,
 
     /// a measurement of demand for the services
-    /// (a higher number means more client inflow)
+    /// (a higher number means more request inflow
+    /// post service & price adjustments)
     pub demand: f32,
+
+    /// a measurement of demand for the services
+    /// (a higher number means more client inflow)
+    #[serde(default = "demand_rate_default")]
+    pub demand_rate: f32,
 
     /// the number of upgrades done to the cloud service software
     pub software_level: u8,
@@ -42,7 +48,7 @@ pub struct WorldState {
     pub cache_level: u8,
 
     /// the routing level used for requests
-    #[serde(default, skip_serializing_if = "routing_level_default")]
+    #[serde(default, skip_serializing_if = "is_default_routing_level")]
     pub routing_level: RoutingLevel,
 
     /// number of operation requests performed per player click
@@ -63,7 +69,7 @@ pub struct WorldState {
 
     /// the total number of requests discarded
     /// for being bad
-    #[serde(default, skip_serializing_if = "requests_failed_default")]
+    #[serde(default, skip_serializing_if = "is_zero_u64")]
     pub requests_failed: u64,
 
     /// the op counts of the awesome service
@@ -80,26 +86,26 @@ pub struct WorldState {
 
     /// whether the player can see a service demand estimate
     /// in the business panel
-    #[serde(default, skip_serializing_if = "can_buy_default")]
+    #[serde(default, skip_serializing_if = "is_false")]
     pub can_see_demand: bool,
 
     /// whether the player has unlocked
     /// buying more cloud nodes
-    #[serde(default, skip_serializing_if = "can_buy_default")]
+    #[serde(default, skip_serializing_if = "is_false")]
     pub can_buy_nodes: bool,
 
     /// whether the player has unlocked
     /// buying more cloud racks
-    #[serde(default, skip_serializing_if = "can_buy_default")]
+    #[serde(default, skip_serializing_if = "is_false")]
     pub can_buy_racks: bool,
 
     /// whether the player has unlocked
     /// buying more datacenters
-    #[serde(default, skip_serializing_if = "can_buy_default")]
+    #[serde(default, skip_serializing_if = "is_false")]
     pub can_buy_datacenters: bool,
 
     /// the rate at which to detect bad requests before routing them
-    #[serde(default, skip_serializing_if = "spam_protection_default")]
+    #[serde(default, skip_serializing_if = "is_zero_f32")]
     pub spam_protection: f32,
 
     /// the indices of the cards
@@ -109,19 +115,23 @@ pub struct WorldState {
     pub cards_used: Vec<UsedCard>,
 }
 
-fn routing_level_default(&routing_level: &RoutingLevel) -> bool {
+fn demand_rate_default() -> f32 {
+    0.25
+}
+
+fn is_default_routing_level(&routing_level: &RoutingLevel) -> bool {
     routing_level == RoutingLevel::default()
 }
 
-fn can_buy_default(&b: &bool) -> bool {
+fn is_false(&b: &bool) -> bool {
     !b
 }
 
-fn requests_failed_default(&x: &u64) -> bool {
+fn is_zero_u64(&x: &u64) -> bool {
     x == 0
 }
 
-fn spam_protection_default(&x: &f32) -> bool {
+fn is_zero_f32(&x: &f32) -> bool {
     x == 0.
 }
 
@@ -288,6 +298,7 @@ impl Default for WorldState {
             spent: Default::default(),
             earned: Default::default(),
             demand: 0.0,
+            demand_rate: 0.25,
             software_level: 0,
             cache_level: 0,
             ops_per_click: 1,

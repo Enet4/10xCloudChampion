@@ -195,7 +195,7 @@ pub static ALL_CARDS: &'static [CardSpec] = &[
         description: "Improves your ranking on search engines",
         cost: Cost::dollars(5).and(Cost::base_ops(850)),
         condition: CardCondition::AvailableBaseOps(Ops(500)),
-        effect: CardEffect::AddPublicity(24.0),
+        effect: CardEffect::AddPublicityRate(24., 0.25),
     },
     CardSpec {
         id: "d2",
@@ -203,7 +203,7 @@ pub static ALL_CARDS: &'static [CardSpec] = &[
         description: "Good ol' paper ads around SV",
         cost: Cost::dollars(70).and(Cost::base_ops(900)),
         condition: CardCondition::Earned(Money::dollars(50)),
-        effect: CardEffect::AddPublicity(48.0),
+        effect: CardEffect::AddPublicityRate(48.0, 0.5),
     },
     CardSpec {
         id: "d3",
@@ -211,7 +211,7 @@ pub static ALL_CARDS: &'static [CardSpec] = &[
         description: "A sneak peek into your services",
         cost: Cost::dollars(290).and(Cost::super_ops(300)),
         condition: CardCondition::Earned(Money::dollars(200)),
-        effect: CardEffect::AddPublicity(88.0),
+        effect: CardEffect::AddPublicityRate(88.0, 1.),
     },
     CardSpec {
         id: "d3.5",
@@ -219,7 +219,7 @@ pub static ALL_CARDS: &'static [CardSpec] = &[
         description: "Present your services to a savvy audience",
         condition: CardCondition::Earned(Money::dollars(1_200)),
         cost: Cost::dollars(750).and(Cost::super_ops(1_000)),
-        effect: CardEffect::AddPublicity(200.),
+        effect: CardEffect::AddPublicityRate(250., 2.0),
     },
     CardSpec {
         id: "d4",
@@ -227,7 +227,7 @@ pub static ALL_CARDS: &'static [CardSpec] = &[
         description: "Millions will see this board",
         cost: Cost::dollars(7_500).and(Cost::super_ops(3_000)),
         condition: CardCondition::Earned(Money::dollars(6_200)),
-        effect: CardEffect::AddPublicity(580.0),
+        effect: CardEffect::AddPublicityRate(600.0, 8.0),
     },
     CardSpec {
         id: "d4.5",
@@ -235,7 +235,7 @@ pub static ALL_CARDS: &'static [CardSpec] = &[
         description: "Regain your clients' trust",
         cost: Cost::dollars(2_000),
         condition: CardCondition::RequestsDropped(500),
-        effect: CardEffect::AddPublicity(64.),
+        effect: CardEffect::AddPublicityRate(64., 0.5),
     },
     CardSpec {
         id: "d5",
@@ -243,7 +243,7 @@ pub static ALL_CARDS: &'static [CardSpec] = &[
         description: "Great services are publicized in great events",
         condition: CardCondition::Earned(Money::dollars(50_000)),
         cost: Cost::dollars(74_000).and(Cost::epic_ops(6_000)),
-        effect: CardEffect::AddPublicity(1_999.0),
+        effect: CardEffect::AddPublicityRate(1_999.0, 20.0),
     },
     CardSpec {
         id: "d6",
@@ -251,7 +251,7 @@ pub static ALL_CARDS: &'static [CardSpec] = &[
         description: "Make a deal with EWS, your biggest rival",
         condition: CardCondition::Earned(Money::dollars(10_000_000)),
         cost: Cost::dollars(169_400_000).and(Cost::epic_ops(50_000)),
-        effect: CardEffect::AddPublicity(12_000.0),
+        effect: CardEffect::AddPublicityRate(12_000.0, 42.),
     },
     CardSpec {
         id: "d7",
@@ -259,7 +259,7 @@ pub static ALL_CARDS: &'static [CardSpec] = &[
         description: "Your ultimate brand ambassadors",
         condition: CardCondition::TotalAwesomeOps(Ops(10_000)),
         cost: Cost::dollars(5_000_000_000).and(Cost::awesome_ops(70_000)),
-        effect: CardEffect::AddPublicity(250_000.0),
+        effect: CardEffect::AddPublicityRate(250_000.0, 100.),
     },
     // --- energy cards ---
     CardSpec {
@@ -449,7 +449,7 @@ pub static ALL_CARDS: &'static [CardSpec] = &[
         description: "Test adding advertisements",
         cost: Cost::super_ops(100),
         condition: CardCondition::appear_immediately(),
-        effect: CardEffect::AddPublicity(20.),
+        effect: CardEffect::AddPublicityRate(20., 0.),
     },
     CardSpec {
         id: "test-3",

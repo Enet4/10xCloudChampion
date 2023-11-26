@@ -347,9 +347,10 @@ where
                 let user_spec = &state.user_specs[state.user_specs.len() - 1];
                 self.bootstrap_events_for(state, user_spec);
             }
-            CardEffect::AddPublicity(demand_delta) => {
+            CardEffect::AddPublicityRate(demand_delta, demand_rate_delta) => {
                 let was_high_demand = state.demand > DEMAND_DOS_THRESHOLD;
                 state.demand += demand_delta;
+                state.demand_rate += demand_rate_delta;
                 // if demand increased a lot,
                 // insert DoS users if not added already
                 if !was_high_demand && state.demand > DEMAND_DOS_THRESHOLD {
@@ -494,7 +495,7 @@ where
         // check whether to increase demand from time passing by
         if time / INCREASE_DEMAND_PERIOD - state.time / INCREASE_DEMAND_PERIOD > 0 {
             // increase demand a tiny bit
-            state.demand += 0.25;
+            state.demand += state.demand_rate;
             gloo_console::debug!("Demand increased to ", state.demand);
         }
 

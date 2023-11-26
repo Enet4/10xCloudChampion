@@ -196,8 +196,10 @@ pub enum CardEffect {
     /// Add cloud clients with the given specification,
     /// plus increase general service demand by the given percentage
     AddClientsWithPublicity(CloudClientSpec, f32),
-    /// Increase general service demand by the given amount
-    AddPublicity(f32),
+    /// Increase general service visibility (0),
+    /// and visibility increase rate (1),
+    /// by the given amounts
+    AddPublicityRate(f32, f32),
     /// Increase the number of operations per player click
     UpgradeOpsPerClick(u32),
     /// Set the electricity bill level (higher levels mean cheaper electricity)
