@@ -598,6 +598,12 @@ where
                     };
                     // add processing to the routing node
                     let node = state.node_mut(node_num).unwrap();
+                    // drop request if node is busy
+                    if node.processing >= node.num_cores {
+                        state.requests_dropped += event.amount as u64;
+                        return;
+                    }
+
                     node.processing += 1;
                     let duration = node.time_per_request_routing() * event.amount;
 
