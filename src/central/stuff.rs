@@ -141,8 +141,22 @@ impl std::iter::Sum for Cost {
 impl fmt::Display for Cost {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let mut some = false;
-        if self.money.0 != 0 {
-            write!(f, "{}", self.money)?;
+        if self.awesome_ops != Ops(0) {
+            write!(f, "{} awesome ops", Compact(self.awesome_ops))?;
+            some = true;
+        }
+        if self.epic_ops != Ops(0) {
+            if some {
+                f.write_str(" + ")?;
+            }
+            write!(f, "{} epic ops", Compact(self.epic_ops))?;
+            some = true;
+        }
+        if self.super_ops != Ops(0) {
+            if some {
+                f.write_str(" + ")?;
+            }
+            write!(f, "{} super ops", Compact(self.super_ops))?;
             some = true;
         }
         if self.base_ops != Ops(0) {
@@ -152,23 +166,11 @@ impl fmt::Display for Cost {
             write!(f, "{} base ops", Compact(self.base_ops))?;
             some = true;
         }
-        if self.super_ops != Ops(0) {
+        if self.money.0 != 0 {
             if some {
                 f.write_str(" + ")?;
             }
-            write!(f, "{} super ops", Compact(self.super_ops))?;
-        }
-        if self.epic_ops != Ops(0) {
-            if some {
-                f.write_str(" + ")?;
-            }
-            write!(f, "{} epic ops", Compact(self.epic_ops))?;
-        }
-        if self.awesome_ops != Ops(0) {
-            if some {
-                f.write_str(" + ")?;
-            }
-            write!(f, "{} awesome ops", Compact(self.awesome_ops))?;
+            write!(f, "{}", self.money)?;
         }
         Ok(())
     }
