@@ -655,7 +655,8 @@ where
                 let software_level = state.software_level;
                 let cache_level = state.cache_level;
                 let powersave = state.is_powersaving();
-                let routing_needed = state.nodes.len() > 1;
+                let routing_needed =
+                    state.nodes.len() > 1 && state.routing_level != RoutingLevel::NoRoutingCost;
                 let Some(routing_node) = state.node_mut(node_num) else {
                     return;
                 };
