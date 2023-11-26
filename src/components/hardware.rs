@@ -157,7 +157,7 @@ pub fn Rack(props: &RackProps) -> Html {
     let can_buy_more_nodes = props.can_buy_nodes && (props.nodes.len() as u32) < RACK_CAPACITY;
     let purchase_button = if can_buy_more_nodes {
         let on_player_action = props.on_player_action.clone();
-        let (action, disabled) = if props.can_buy_racks {
+        let (action, disabled) = if !props.can_buy_racks {
             (PlayerAction::AddNode, props.funds < BARE_NODE_COST)
         } else {
             (
