@@ -753,7 +753,9 @@ where
                 };
 
                 // 1. add electricity consumption
-                state.electricity.add_consumption(1.);
+                if !state.is_powersaving() {
+                    state.electricity.add_consumption(1.);
+                }
 
                 // 2. increment op counts (available & total)
                 let service = state.service_by_kind_mut(event.service);
