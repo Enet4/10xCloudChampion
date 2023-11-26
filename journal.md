@@ -152,3 +152,15 @@ Fixed price changing UI for good.
 Tweak demand formula yet again.
 Implemented powersaving, for when the player forgets to pay the bills.
 Adjusted cards.
+
+## Day 19: 2023-11-26
+
+Tweaked Business panel UI a bit.
+Made it possible to purchase more nodes,
+but no multiple racks yet.
+Fixed some more presentation and hardware acquisition bugs.
+Fixed some request processing bugs,
+but there are still some issues to take care of.
+Tweaked cost display.
+Implemented demand rate increase.
+Added winning condition in the form of cards.
