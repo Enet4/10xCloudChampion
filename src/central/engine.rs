@@ -139,6 +139,9 @@ pub struct GameEngine<C: Component> {
     /// link to the main game component's context,
     /// so that we can send messages back to it
     link: Scope<C>,
+    /// a waiting queue where requests are placed
+    /// when no node is available to process them
+    waiting_queue: VecDeque<WaitingRouteRequest>,
 }
 
 impl<C> GameEngine<C>
@@ -152,6 +155,7 @@ where
         GameEngine {
             queue: RequestEventQueue::new(),
             gen: SampleGenerator::new(),
+            waiting_queue: VecDeque::new(),
             link,
         }
     }
@@ -559,6 +563,7 @@ where
 
         match event.kind {
             RequestEventStage::RequestArrived => {
+                let powersave = state.is_powersaving();
                 // route the request if necessary
                 let node_count = state.nodes.len() as u32;
                 if node_count == 1 {
@@ -570,45 +575,60 @@ where
                     push_event(event.into_routed(0, node_num));
                 } else {
                     // route the request:
-                    // pick a routing node
-                    let node_num = if state.routing_level == RoutingLevel::Distributed {
-                        loop {
-                            let n = self.gen.gen_range(0, node_count);
-                            let picked_node = state.node(n).unwrap();
-                            // if node is not busy, use it
-                            if picked_node.processing < picked_node.num_cores {
-                                break n;
-                            }
-                            // check if all nodes are busy
-                            if state
-                                .nodes
-                                .iter()
-                                .all(|node| node.processing >= node.num_cores)
-                            {
-                                // all nodes are busy, drop the request
-                                state.requests_dropped += event.amount as u64;
-                                return;
-                            }
-                            // otherwise, try again
+
+                    // check if any node is not busy
+                    if state.nodes.iter().all(|node| node.is_busy(powersave)) {
+                        // enqueue it unless the waiting queue is too large already
+                        if self.waiting_queue.len() > 2_000 {
+                            // drop the request
+                            state.requests_dropped += event.amount as u64;
+                        } else {
+                            // enqueue it
+                            self.waiting_queue.push_back(WaitingRouteRequest {
+                                amount: event.amount,
+                                user_spec_id: event.user_spec_id,
+                                service: event.service,
+                            });
                         }
                     } else {
-                        // always use the first one
-                        // until the player gets the upgrade
-                        0
-                    };
-                    // add processing to the routing node
-                    let node = state.node_mut(node_num).unwrap();
-                    // drop request if node is busy
-                    if node.processing >= node.num_cores {
-                        state.requests_dropped += event.amount as u64;
-                        return;
+                        // pick a routing node
+                        let node_num = if state.routing_level == RoutingLevel::Distributed {
+                            loop {
+                                let n = self.gen.gen_range(0, node_count);
+                                let picked_node = state.node(n).unwrap();
+                                // if node is not busy, use it
+                                if !picked_node.is_busy(powersave) {
+                                    break n;
+                                }
+                                // otherwise put it on the waiting queue
+                            }
+                        } else {
+                            // always use the first one
+                            // until the player gets the upgrade
+                            0
+                        };
+                        // add processing to the routing node
+                        let node = state.node_mut(node_num).unwrap();
+                        // drop request if node is busy
+                        if node.is_busy(powersave) {
+                            gloo_console::debug!("node ", node_num, " dropped a request");
+
+                            state.requests_dropped += event.amount as u64;
+                        } else {
+                            gloo_console::debug!(
+                                "node ",
+                                node_num,
+                                " is routing. processing: ",
+                                node.processing
+                            );
+
+                            node.processing += 1;
+                            let duration = node.time_per_request_routing() * event.amount;
+
+                            // 2. push event to request routed
+                            push_event(event.into_routed(duration, node_num));
+                        }
                     }
-
-                    node.processing += 1;
-                    let duration = node.time_per_request_routing() * event.amount;
-
-                    // 2. push event to request routed
-                    push_event(event.into_routed(duration, node_num));
                 }
 
                 let mut should_drop_spec = false;
@@ -663,7 +683,15 @@ where
 
                 // 1. if required, decrement processing on the routing node
                 if routing_needed {
-                    routing_node.processing -= 1;
+                    if routing_node.processing == 0 {
+                        gloo_console::warn!(
+                            "Processing count of routing node",
+                            routing_node.id,
+                            "is zero, there is probably a bug"
+                        );
+                    } else {
+                        routing_node.processing -= 1;
+                    }
                     // add small electricity cost
                     if !powersave {
                         state.electricity.add_consumption(0.01);
@@ -707,12 +735,7 @@ where
                 node.ram_usage += mem_required;
 
                 // 6. if node has a CPU available,
-                let cores_available = if powersave {
-                    (node.num_cores / 4).max(1)
-                } else {
-                    node.num_cores
-                };
-                if node.processing < cores_available {
+                if !node.is_busy(powersave) {
                     // calculate time to process the request
                     let mut duration =
                         node.time_per_request(event.service, software_level) * event.amount;
@@ -748,6 +771,7 @@ where
                 node_num,
                 ram_required,
             } => {
+                let routing_level = state.routing_level;
                 let software_level = state.software_level;
                 if state.node(node_num).is_none() {
                     return;
@@ -795,8 +819,15 @@ where
                 // 4. decrement memory usage
                 node.ram_usage -= ram_required;
 
-                // 5. if there are requests waiting
-                if let Some(request) = node.requests.pop_front() {
+                // 5. if there are routing requests waiting
+                if (node.id == 0 || routing_level == RoutingLevel::Distributed) {
+                    if let Some(request) = self.waiting_queue.pop_front() {
+                        // pop one and schedule a new request routed event
+                        let node_count = state.nodes.len() as u32;
+                        // TODO
+                    }
+                // 6. else if there are requests waiting
+                } else if let Some(request) = node.requests.pop_front() {
                     // pop one and schedule a new request processed event
                     let duration =
                         node.time_per_request(event.service, software_level) * request.amount;
@@ -820,7 +851,15 @@ where
                     })
                 } else {
                     // decrement processing on the processing node
-                    node.processing -= 1;
+                    if node.processing == 0 {
+                        gloo_console::warn!(
+                            "Processing count of node",
+                            node.id,
+                            "is zero, there is probably a bug"
+                        );
+                    } else {
+                        node.processing -= 1;
+                    }
                 }
 
                 // apply revenue
@@ -849,6 +888,21 @@ where
         }) * CACHE_LEVELS[cache_level as usize].0
             * SOFTWARE_LEVELS[software_level as usize].1
     }
+}
+
+/// A request (or request set) waiting to be routed.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct WaitingRouteRequest {
+    /// multiplier for the number of requests
+    /// bundled into one
+    amount: u32,
+
+    /// the cloud user specification ID
+    /// (or None if it was requested by the player)
+    user_spec_id: Option<u32>,
+
+    /// the request's cloud service kind
+    service: ServiceKind,
 }
 
 /// A request (or request set) waiting to be processed in a node.
@@ -1023,6 +1077,20 @@ impl CloudNode {
             true
         } else {
             false
+        }
+    }
+
+    /// Check whether this node cannot process any more requests in parallel
+    /// at this time.
+    pub(crate) fn is_busy(&self, powersave: bool) -> bool {
+        if self.processing > self.num_cores {
+            gloo_console::warn!("Cloud node ", self.id, " is over its capacity!");
+        }
+
+        if powersave {
+            self.processing >= self.num_cores / 4
+        } else {
+            self.processing >= self.num_cores
         }
     }
 }
