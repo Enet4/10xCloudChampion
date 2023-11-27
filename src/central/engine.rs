@@ -588,6 +588,7 @@ where
                                 amount: event.amount,
                                 user_spec_id: event.user_spec_id,
                                 service: event.service,
+                                bad: event.bad,
                             });
                         }
                     } else {
@@ -819,15 +820,25 @@ where
                 // 4. decrement memory usage
                 node.ram_usage -= ram_required;
 
+                let node_num = node.id;
+
                 // 5. if there are routing requests waiting
                 if !self.waiting_queue.is_empty()
-                    && (node.id == 0 || routing_level == RoutingLevel::Distributed)
+                    && (node_num == 0 || routing_level == RoutingLevel::Distributed)
                 {
                     let request = self.waiting_queue.pop_front().unwrap();
-                    // pop one and schedule a new request routed event
-                    let node_count = state.nodes.len() as u32;
-                    // TODO
-                    // 6. else if there are requests waiting
+                    // pop one and route the request now using this node
+                    let duration = node.time_per_request_routing() * request.amount;
+
+                    // push event to request routed
+                    push_event(RequestEvent {
+                        timestamp: event.timestamp + duration as Time,
+                        user_spec_id: request.user_spec_id,
+                        amount: request.amount,
+                        service: request.service,
+                        bad: request.bad,
+                        kind: RequestEventStage::RequestRouted { node_num },
+                    });
                 } else if let Some(request) = node.requests.pop_front() {
                     // pop one and schedule a new request processed event
                     let duration =
@@ -904,6 +915,9 @@ pub struct WaitingRouteRequest {
 
     /// the request's cloud service kind
     service: ServiceKind,
+
+    /// whether the request is bad
+    bad: bool,
 }
 
 /// A request (or request set) waiting to be processed in a node.
