@@ -356,10 +356,10 @@ where
                 // add DoS specification for this service
                 // if there is high demand
                 if state.demand > DEMAND_DOS_THRESHOLD {
-                    if state
+                    if !state
                         .user_specs
                         .iter()
-                        .all(|spec| spec.service != *kind && spec.bad)
+                        .any(|spec| spec.service == *kind && spec.bad)
                     {
                         state.user_specs.push(CloudUserSpec {
                             id: state.next_user_spec_id(),
@@ -433,10 +433,10 @@ where
                         ServiceKind::Epic,
                         ServiceKind::Awesome,
                     ] {
-                        if state
+                        if !state
                             .user_specs
                             .iter()
-                            .all(|spec| spec.service != service && spec.bad)
+                            .any(|spec| spec.service == service && spec.bad)
                         {
                             state.user_specs.push(CloudUserSpec {
                                 id: state.next_user_spec_id(),
