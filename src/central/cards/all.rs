@@ -304,19 +304,11 @@ pub static ALL_CARDS: &'static [CardSpec] = &[
     },
     CardSpec {
         id: "e5",
-        title: "Fusion reactor research",
-        description: "Discover a source of energy that is too good to be true",
-        cost: Cost::dollars(689_000).and(Cost::epic_ops(24_000_000)),
-        condition: CardCondition::TotalCloudNodes(42),
-        effect: CardEffect::SetElectricityCostLevel(6),
-    },
-    CardSpec {
-        id: "e6",
-        title: "Free energy",
+        title: "Free energy research",
         description: "Develop a groundbreaking source of free energy",
-        cost: Cost::dollars(10_000_000).and(Cost::awesome_ops(1_000_000)),
+        cost: Cost::dollars(8_000_000).and(Cost::awesome_ops(1_000_000)),
         condition: CardCondition::TotalAwesomeOps(Ops(700_000)),
-        effect: CardEffect::SetElectricityCostLevel(7),
+        effect: CardEffect::SetElectricityCostLevel(6),
     },
     // --- bad request protection cards ---
     CardSpec {

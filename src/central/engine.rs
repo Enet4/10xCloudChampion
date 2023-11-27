@@ -62,7 +62,7 @@ pub const UPGRADED_NODE_COST: Money = BARE_NODE_COST
 /// namely the memory reserve multiplier (0)
 /// and the cache hit rate (1)
 pub static CACHE_LEVELS: [(f32, f32); 5] =
-    [(1., 0.), (4., 0.25), (16., 0.5), (20., 0.75), (24., 0.85)];
+    [(1., 0.), (4., 0.25), (16., 0.5), (18., 0.75), (20., 0.875)];
 
 /// Modifiers for the time to process a request and memory required,
 /// a number between 0 and 1,
@@ -76,21 +76,19 @@ pub static SOFTWARE_LEVELS: [(f64, f64); 5] = [
 ];
 
 /// The electricity cost in Wattever
-pub static ELECTRICITY_COST_LEVELS: [Money; 8] = [
+pub static ELECTRICITY_COST_LEVELS: [Money; 7] = [
     // base cost
-    Money::cents(30),
+    Money::cents(32),
     // renegotiate
-    Money::cents(26),
+    Money::cents(29),
     // repair A/C
-    Money::cents(20),
+    Money::cents(25),
     // buy solar panels
-    Money::cents(16),
+    Money::cents(18),
     // commit to clean power plan
     Money::cents(5),
     // dedicated power plant
-    Money::cents(1),
-    // fusion reactor discovery
-    Money::millicents(80),
+    Money::dec_cents(5),
     // free energy
     Money::zero(),
 ];
@@ -106,11 +104,11 @@ pub static SUPER_MEMORY_RESERVE: Memory = Memory::mb(256);
 /// amount of memory that all each cloud node must reserve
 /// to provide the epic cloud service tier,
 /// before modifiers
-pub static EPIC_MEMORY_RESERVE: Memory = Memory::gb(4);
+pub static EPIC_MEMORY_RESERVE: Memory = Memory::gb(2);
 /// amount of memory that all each cloud node must reserve
 /// to provide the awesome cloud service tier,
 /// before modifiers
-pub static AWESOME_MEMORY_RESERVE: Memory = Memory::gb(32);
+pub static AWESOME_MEMORY_RESERVE: Memory = Memory::gb(16);
 
 /// the threshold of base demand at which DoS attacks will emerge
 pub static DEMAND_DOS_THRESHOLD: f32 = 2500.0;
@@ -292,7 +290,10 @@ where
     }
 
     fn apply_card(&mut self, state: &mut WorldState, card: &CardSpec) {
-        let effect = &card.effect;
+        self.apply_card_effect(state, &card.effect)
+    }
+
+    fn apply_card_effect(&mut self, state: &mut WorldState, effect: &CardEffect) {
         match effect {
             CardEffect::Nothing => { /* no op */ }
             CardEffect::UnlockDemandEstimate => {
@@ -350,6 +351,15 @@ where
             }
             CardEffect::SetElectricityCostLevel(level) => {
                 state.electricity.cost_level = state.electricity.cost_level.max(*level);
+                if *level == 4 {
+                    // bonus ads at level 4 (clean energy plan)
+                    state.demand += 5_000.;
+                    state.demand_rate += 32.;
+                } else if *level == 6 {
+                    // bonus ads at level 6 (free energy)
+                    state.demand += 50_000.;
+                    state.demand_rate += 64.;
+                }
             }
             CardEffect::UpgradeOpsPerClick(amount) => {
                 state.ops_per_click = state.ops_per_click.max(*amount);
@@ -1034,7 +1044,7 @@ impl CloudNode {
     }
 
     pub(crate) fn time_per_request_routing(&self) -> u32 {
-        512 / self.cpu_speed
+        256 / self.cpu_speed
     }
 
     pub fn next_cpu_upgrade_cost(&self) -> Option<Money> {
