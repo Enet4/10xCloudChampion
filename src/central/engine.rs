@@ -599,7 +599,6 @@ where
                 + self.recent_requests_dropped
                 + self.recent_requests_failed;
             if total_requests > 0 {
-                gloo_console::debug!("Requests fulfilled:", self.recent_requests_fulfilled);
                 self.drop_rate = self.recent_requests_dropped as f32 / total_requests as f32;
                 self.failure_rate = self.recent_requests_failed as f32 / total_requests as f32;
             } else {
