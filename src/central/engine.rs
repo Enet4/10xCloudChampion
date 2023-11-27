@@ -719,7 +719,7 @@ where
                 };
 
                 // 2. pick a request processing node
-                let node_id = self.gen.gen_range(0, state.nodes.len() as u32);
+                let node_num = self.gen.gen_range(0, state.nodes.len() as u32);
 
                 // 3. check memory reserve requirement
                 let mem_reserve_required = Self::calculate_memory_reserve_required(
@@ -727,7 +727,7 @@ where
                     state.cache_level,
                     state.software_level,
                 );
-                let node = state.node_mut(node_id).unwrap();
+                let node = state.node_mut(node_num).unwrap();
 
                 if !node.reserve_for(mem_reserve_required) {
                     // can't reserve, drop the request
@@ -761,13 +761,13 @@ where
                     let cache_hit = self.gen.gen_bool(cache_rate);
                     if cache_hit {
                         // make it much faster
-                        duration = (duration / 20).min(1);
+                        duration = (duration / 20).max(1);
                     }
 
                     //  & increment CPU usage
                     node.processing += 1;
                     //  & push request processed event to the queue
-                    push_event(event.into_processed(duration, mem_required));
+                    push_event(event.into_processed(node_num, duration, mem_required));
                 } else {
                     // add to waiting queue
                     node.requests.push_back(WaitingRequest {

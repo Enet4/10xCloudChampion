@@ -67,11 +67,13 @@ impl RequestEvent {
         }
     }
 
-    pub fn into_processed(self, duration: u32, ram_required: Memory) -> Self {
-        let node_num = match self.kind {
-            RequestEventStage::RequestRouted { node_num } => node_num,
-            _ => panic!("cannot process a request that has not been routed"),
-        };
+    /// Convert a routed request event
+    /// into a processed request event.
+    pub fn into_processed(self, node_num: u32, duration: u32, ram_required: Memory) -> Self {
+        debug_assert!(
+            matches!(self.kind, RequestEventStage::RequestRouted { .. }),
+            "cannot process a request that has not been routed"
+        );
 
         Self {
             timestamp: self.timestamp + duration as u64,
