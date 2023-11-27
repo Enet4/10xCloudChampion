@@ -142,8 +142,8 @@ pub static ALL_CARDS: &'static [CardSpec] = &[
         id: "b4",
         title: "Seamless monetary volition",
         description: "All awesome ops give you an extra $0.05",
-        cost: Cost::awesome_ops(56_000).and(Cost::epic_ops(128_000)),
-        condition: CardCondition::TotalAwesomeOps(Ops(7_777)),
+        cost: Cost::awesome_ops(36_000).and(Cost::epic_ops(128_000)),
+        condition: CardCondition::TotalAwesomeOps(Ops(9_777)),
         effect: CardEffect::UpgradeEntitlements(ServiceKind::Awesome, Money::cents(5)),
     },
     // --- caching cards ---
@@ -165,9 +165,21 @@ pub static ALL_CARDS: &'static [CardSpec] = &[
     },
     CardSpec {
         id: "c2",
-        title: "Even more caching",
-        description: "Use a lot more memory for greater throughput",
-        cost: Cost::money(Money::dollars(2_500)).and(Cost::super_ops(250_000)),
+        title: "High-end predictive caching",
+        description: "Improved cache greater throughput",
+        cost: Cost::money(Money::dollars(2_000))
+            .and(Cost::epic_ops(50_000))
+            .and(Cost::super_ops(100_000)),
+        condition: CardCondition::TotalMemoryUpgrades(40),
+        effect: CardEffect::MoreCaching,
+    },
+    CardSpec {
+        id: "c3",
+        title: "Clairvoyant  caching",
+        description: "Do caching like it knew almost everything in advance",
+        cost: Cost::money(Money::dollars(500_000))
+            .and(Cost::awesome_ops(60_000))
+            .and(Cost::epic_ops(100_000)),
         condition: CardCondition::TotalMemoryUpgrades(40),
         effect: CardEffect::MoreCaching,
     },
@@ -239,19 +251,27 @@ pub static ALL_CARDS: &'static [CardSpec] = &[
     },
     CardSpec {
         id: "d5",
-        title: "Cricket World Cup ad",
-        description: "Great services are publicized in great events",
+        title: "Cricket Championship ad",
+        description: "Great services are advertized in great events",
         condition: CardCondition::Earned(Money::dollars(50_000)),
         cost: Cost::dollars(74_000).and(Cost::epic_ops(6_000)),
-        effect: CardEffect::AddPublicityRate(1_999.0, 20.0),
+        effect: CardEffect::AddPublicityRate(1_999., 20.),
+    },
+    CardSpec {
+        id: "d5.5",
+        title: "SolVision Song Contest ad",
+        description: "“These services are out of this world!”",
+        condition: CardCondition::Earned(Money::dollars(265_000)),
+        cost: Cost::dollars(300_000).and(Cost::epic_ops(48_000)),
+        effect: CardEffect::AddPublicityRate(9_000., 48.),
     },
     CardSpec {
         id: "d6",
         title: "Strategic company purchase",
         description: "Make a deal with EWS, your biggest rival",
         condition: CardCondition::Earned(Money::dollars(10_000_000)),
-        cost: Cost::dollars(16_940_000).and(Cost::epic_ops(50_000)),
-        effect: CardEffect::AddPublicityRate(12_000.0, 42.),
+        cost: Cost::dollars(16_940_000).and(Cost::epic_ops(250_000)),
+        effect: CardEffect::AddPublicityRate(60_000.0, 75.),
     },
     CardSpec {
         id: "d7",
@@ -259,7 +279,7 @@ pub static ALL_CARDS: &'static [CardSpec] = &[
         description: "Your ultimate brand ambassadors",
         condition: CardCondition::TotalAwesomeOps(Ops(20_000)),
         cost: Cost::dollars(50_000_000).and(Cost::awesome_ops(70_000)),
-        effect: CardEffect::AddPublicityRate(250_000.0, 100.),
+        effect: CardEffect::AddPublicityRate(300_000.0, 200.),
     },
     // --- energy cards ---
     CardSpec {
@@ -275,7 +295,7 @@ pub static ALL_CARDS: &'static [CardSpec] = &[
         title: "Repair A/C system",
         description: "Increase energy efficiency",
         cost: Cost::dollars(180).and(Cost::base_ops(400)),
-        condition: CardCondition::TotalBaseOps(Ops(200_000)),
+        condition: CardCondition::TotalBaseOps(Ops(100_000)),
         effect: CardEffect::SetElectricityCostLevel(2),
     },
     CardSpec {
@@ -291,7 +311,7 @@ pub static ALL_CARDS: &'static [CardSpec] = &[
         title: "Clean energy plan",
         description: "Commit to clean energy for the long term",
         cost: Cost::dollars(8_800).and(Cost::super_ops(1_000_000)),
-        condition: CardCondition::TotalCloudNodes(4),
+        condition: CardCondition::TotalCloudNodes(6),
         effect: CardEffect::SetElectricityCostLevel(4),
     },
     CardSpec {
