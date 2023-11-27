@@ -216,6 +216,10 @@ pub enum CardEffect {
     UnlockMultiDatacenters,
     /// Unlock demand estimate in business panel
     UnlockDemandEstimate,
+    /// Unlock energy consumption estimate in business panel
+    UnlockEnergyEstimate,
+    /// Unlock request drop&failure rate estimate in business panel
+    UnlockRequestRateEstimate,
     /// Add protection from bad requests (detection rate)
     UpgradeSpamProtection(f32),
     /// Upgrade the routing implementation

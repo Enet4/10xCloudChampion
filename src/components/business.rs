@@ -10,6 +10,14 @@ pub struct BusinessProps {
     #[prop_or_default]
     pub funds: Money,
 
+    /// the energy consumption rate
+    /// (or `None` if this has not been unlocked yet)
+    pub energy_consumption_rate: Option<f64>,
+
+    /// the request (drop, failure) rates
+    /// (or `None` if this has not been unlocked yet)
+    pub request_rates: Option<(f32, f32)>,
+
     /// ops available for the base service
     pub base_ops_available: Ops,
 
@@ -87,6 +95,13 @@ pub fn Business(props: &BusinessProps) -> Html {
             <p>
                 if let Some(demand) = props.demand {
                     <><span>{"Visibility: "}</span> {format!("{:.2}%", demand / 100.)} <br/></>
+                }
+                if let Some(energy_consumption_rate) = props.energy_consumption_rate {
+                    <><span>{"Energy consumption: "}</span> {format!("{:.2} Wev", energy_consumption_rate)} <br/></>
+                }
+                if let Some((drop_rate, failure_rate)) = props.request_rates {
+                    <><span>{"Request drop rate: "}</span> {format!("{:.1}%", drop_rate * 100.)}<br/></>
+                    <><span>{"Request failure rate: "}</span> {format!("{:.1}%", failure_rate * 100.)}<br/></>
                 }
             </p>
             {electricity}

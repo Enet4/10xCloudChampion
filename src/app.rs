@@ -180,6 +180,16 @@ impl Component for Game {
         let electricity_bill = self.state.electricity.total_due.into_cent_precision();
         let business_props = BusinessProps {
             funds: self.state.funds,
+            energy_consumption_rate: if self.state.can_see_energy_consumption {
+                Some(self.state.electricity.energy_consumption_rate)
+            } else {
+                None
+            },
+            request_rates: if self.state.can_see_request_rates {
+                Some((self.engine.drop_rate, self.engine.failure_rate))
+            } else {
+                None
+            },
             base_ops_available: self.state.base_service.available,
             super_ops_available: if super_service.unlocked {
                 Some(super_service.available)

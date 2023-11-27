@@ -364,6 +364,22 @@ pub static ALL_CARDS: &'static [CardSpec] = &[
         condition: CardCondition::TotalBaseOps(Ops(200)),
         effect: CardEffect::UnlockDemandEstimate,
     },
+    CardSpec {
+        id: "i1",
+        title: "Electronic energy meter",
+        description: "Estimate the power consumption of your services",
+        condition: CardCondition::TotalSuperOps(Ops(350)),
+        cost: Cost::dollars(100).and(Cost::super_ops(500)),
+        effect: CardEffect::UnlockEnergyEstimate,
+    },
+    CardSpec {
+        id: "i2",
+        title: "Service metric ingestion pipeline",
+        description: "Estimate request drop & failure rates",
+        condition: CardCondition::TotalEpicOps(Ops(500)),
+        cost: Cost::dollars(500).and(Cost::epic_ops(700)),
+        effect: CardEffect::UnlockRequestRateEstimate,
+    },
     // --- hardware scaling cards ---
     CardSpec {
         id: "n1",

@@ -121,7 +121,7 @@ pub static ELECTRICITY_BILL_PERIOD: u64 = 2_500_000;
 
 /// time period after which a major update is performed
 /// (also subtle but can do more expensive things)
-pub static MAJOR_UPDATE_PERIOD: u64 = 3_000;
+pub static MAJOR_UPDATE_PERIOD: u64 = 3_200;
 
 /// time period after which the game is automatically saved to local storage
 pub static GAME_SAVE_PERIOD: u64 = 360_000;
@@ -140,6 +140,22 @@ pub struct GameEngine<C: Component> {
     /// a waiting queue where requests are placed
     /// when no node is available to process them
     waiting_queue: VecDeque<WaitingRouteRequest>,
+
+    /// The number of requests recently fulfilled
+    recent_requests_fulfilled: u64,
+
+    /// The number of requests recently dropped
+    /// due to lack of resources
+    recent_requests_dropped: u64,
+
+    /// The number of bad requests recently fulfilled
+    recent_requests_failed: u64,
+
+    /// The drop rate calculated since the last major update
+    pub drop_rate: f32,
+
+    /// The failure rate since the last major update
+    pub failure_rate: f32,
 }
 
 impl<C> GameEngine<C>
@@ -155,6 +171,11 @@ where
             gen: SampleGenerator::new(),
             waiting_queue: VecDeque::new(),
             link,
+            recent_requests_fulfilled: 0,
+            recent_requests_dropped: 0,
+            recent_requests_failed: 0,
+            drop_rate: 0.,
+            failure_rate: 0.,
         }
     }
 
@@ -298,6 +319,12 @@ where
             CardEffect::Nothing => { /* no op */ }
             CardEffect::UnlockDemandEstimate => {
                 state.can_see_demand = true;
+            }
+            CardEffect::UnlockEnergyEstimate => {
+                state.can_see_energy_consumption = true;
+            }
+            CardEffect::UnlockRequestRateEstimate => {
+                state.can_see_request_rates = true;
             }
             CardEffect::UnlockService(kind) => {
                 let service = state.service_by_kind_mut(*kind);
@@ -542,8 +569,10 @@ where
         if time / INCREASE_DEMAND_PERIOD - state.time / INCREASE_DEMAND_PERIOD > 0 {
             // increase demand a tiny bit
             state.demand += state.demand_rate;
-            gloo_console::debug!("Demand increased to ", state.demand);
         }
+
+        // calculate energy consumption
+        state.electricity.calculate_consumption_rate();
 
         // check whether to issue an electricity bill
         if time / ELECTRICITY_BILL_PERIOD - state.time / ELECTRICITY_BILL_PERIOD > 0 {
@@ -562,6 +591,27 @@ where
                 .save_game()
                 .unwrap_or_else(|e| gloo_console::error!(e));
         }
+
+        // if player has unlocked it,
+        // calculate request statistics
+        if state.can_see_request_rates {
+            let total_requests = self.recent_requests_fulfilled
+                + self.recent_requests_dropped
+                + self.recent_requests_failed;
+            if total_requests > 0 {
+                gloo_console::debug!("Requests fulfilled:", self.recent_requests_fulfilled);
+                self.drop_rate = self.recent_requests_dropped as f32 / total_requests as f32;
+                self.failure_rate = self.recent_requests_failed as f32 / total_requests as f32;
+            } else {
+                gloo_console::debug!(
+                    "Skipping req rate calculation because total requests is zero"
+                );
+            }
+        }
+        // reset counters
+        self.recent_requests_fulfilled = 0;
+        self.recent_requests_dropped = 0;
+        self.recent_requests_failed = 0;
     }
 
     /// process a single request event
@@ -592,6 +642,7 @@ where
                         if self.waiting_queue.len() > 2_000 {
                             // drop the request
                             state.requests_dropped += event.amount as u64;
+                            self.recent_requests_dropped += event.amount as u64;
                         } else {
                             // enqueue it
                             self.waiting_queue.push_back(WaitingRouteRequest {
@@ -625,14 +676,8 @@ where
                             gloo_console::debug!("node ", node_num, " dropped a request");
 
                             state.requests_dropped += event.amount as u64;
+                            self.recent_requests_dropped += event.amount as u64;
                         } else {
-                            gloo_console::debug!(
-                                "node ",
-                                node_num,
-                                " is routing. processing: ",
-                                node.processing
-                            );
-
                             node.processing += 1;
                             let duration = node.time_per_request_routing() * event.amount;
 
@@ -740,6 +785,7 @@ where
                 if mem_required > node.ram_capacity - node.ram_usage {
                     // 4.1. if not enough memory, drop the request.
                     state.requests_dropped += event.amount as u64;
+                    self.recent_requests_dropped += event.amount as u64;
                     return;
                 }
                 // 5. add memory usage to the processing node
@@ -884,6 +930,7 @@ where
                     }
                 }
 
+                self.recent_requests_fulfilled += event.amount as u64;
                 // apply revenue
                 if revenue > Money::zero() {
                     state.funds += revenue;
@@ -892,6 +939,7 @@ where
                 // apply bad request count
                 if event.bad {
                     state.requests_failed += event.amount as u64;
+                    self.recent_requests_failed += event.amount as u64;
                 }
             }
         }
@@ -1126,4 +1174,34 @@ pub struct CloudRack {
     pub nodes: Vec<CloudNode>,
     /// the maximum capacity of a single rack
     pub capacity: u8,
+}
+
+#[cfg(test)]
+mod tests {
+
+    #[test]
+    fn test_gen_rate() {
+        let mut gen = super::SampleGenerator::new();
+        let k = 2_000;
+        let mut sum = 0.;
+        for _ in 0..k {
+            if gen.gen_bool(0.75) {
+                sum += 1.;
+            }
+        }
+        let avg = sum / k as f64;
+        // should be around 0.75
+        // (the margin is generous to prevent flaky tests)
+        assert!(avg > 0.72 && avg < 0.78, "hit rate was {}", avg);
+
+        let mut sum = 0.;
+        for _ in 0..k {
+            if gen.gen_bool(0.4) {
+                sum += 1.;
+            }
+        }
+        let avg = sum / k as f64;
+        // should be around 0.4
+        assert!(avg > 0.37 && avg < 0.43, "hit rate was {}", avg);
+    }
 }

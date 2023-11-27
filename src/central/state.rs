@@ -84,10 +84,20 @@ pub struct WorldState {
     /// all server nodes
     pub nodes: Vec<CloudNode>,
 
-    /// whether the player can see a service demand estimate
+    /// whether the player can see the service demand estimate
     /// in the business panel
     #[serde(default, skip_serializing_if = "is_false")]
     pub can_see_demand: bool,
+
+    /// whether the player can see the energy consumption estimate
+    /// in the hardware panel
+    #[serde(default, skip_serializing_if = "is_false")]
+    pub can_see_energy_consumption: bool,
+
+    /// whether the player can see the request fulfillment & drop rates
+    /// in the hardware panel
+    #[serde(default, skip_serializing_if = "is_false")]
+    pub can_see_request_rates: bool,
 
     /// whether the player has unlocked
     /// buying more cloud nodes
@@ -312,6 +322,8 @@ impl Default for WorldState {
             requests_failed: 0,
             nodes: vec![CloudNode::new(0)],
             can_see_demand: false,
+            can_see_energy_consumption: false,
+            can_see_request_rates: false,
             can_buy_nodes: false,
             can_buy_racks: false,
             can_buy_datacenters: false,
@@ -445,12 +457,32 @@ pub struct Electricity {
     /// the timestamp of the last bill
     /// (or 0 if no bills have been issued yet)
     pub last_bill_time: Time,
+
+    /// The amount of energy recently consumed
+    ///
+    /// Transient.
+    #[serde(skip, default)]
+    pub recent_energy_consumed: f64,
+
+    /// The energy consumption calculated last major update
+    ///
+    /// Transient.
+    #[serde(skip, default)]
+    pub energy_consumption_rate: f64,
 }
 
 impl Electricity {
     pub fn add_consumption(&mut self, milli_wattever: f64) {
         self.consumed += milli_wattever;
         self.total_consumed += milli_wattever;
+        self.recent_energy_consumed += milli_wattever;
+    }
+
+    pub fn calculate_consumption_rate(&mut self) -> f64 {
+        let rate = self.recent_energy_consumed;
+        self.recent_energy_consumed = 0.;
+        self.energy_consumption_rate = rate;
+        rate
     }
 
     /// Calculate the cost of the bill if it were to be emitted now
@@ -475,6 +507,8 @@ impl Default for Electricity {
             total_consumed: 0.0,
             total_due: Money::zero(),
             last_bill_time: 0,
+            recent_energy_consumed: 0.,
+            energy_consumption_rate: 0.,
         }
     }
 }
