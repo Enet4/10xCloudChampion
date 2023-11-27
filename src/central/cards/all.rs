@@ -166,7 +166,7 @@ pub static ALL_CARDS: &'static [CardSpec] = &[
     CardSpec {
         id: "c2",
         title: "High-end predictive caching",
-        description: "Improved cache greater throughput",
+        description: "An enhanced cache with greater throughput",
         cost: Cost::money(Money::dollars(2_000))
             .and(Cost::epic_ops(50_000))
             .and(Cost::super_ops(100_000)),
@@ -175,7 +175,7 @@ pub static ALL_CARDS: &'static [CardSpec] = &[
     },
     CardSpec {
         id: "c3",
-        title: "Clairvoyant  caching",
+        title: "Extrapolating clairvoyant cache system",
         description: "Do caching like it knew almost everything in advance",
         cost: Cost::money(Money::dollars(500_000))
             .and(Cost::awesome_ops(60_000))
@@ -206,7 +206,7 @@ pub static ALL_CARDS: &'static [CardSpec] = &[
         title: "Optimize SEO",
         description: "Improves your ranking on search engines",
         cost: Cost::dollars(5).and(Cost::base_ops(850)),
-        condition: CardCondition::AvailableBaseOps(Ops(500)),
+        condition: CardCondition::TotalBaseOps(Ops(650)),
         effect: CardEffect::AddPublicityRate(24., 0.25),
     },
     CardSpec {
