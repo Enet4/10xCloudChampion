@@ -491,7 +491,7 @@ pub static ALL_CARDS: &'static [CardSpec] = &[
     CardSpec {
         id: "win1",
         title: "You did 1 billion awesome ops",
-        description: "That's a great deal!",
+        description: "That's a huge deal!",
         cost: Cost::nothing(),
         condition: CardCondition::TimeAfterCard {
             card: "win0",
@@ -502,7 +502,7 @@ pub static ALL_CARDS: &'static [CardSpec] = &[
     CardSpec {
         id: "win2",
         title: "But you must be tired",
-        description: "And there is nothing else to offer here",
+        description: "And there is not much else to offer here",
         cost: Cost::nothing(),
         condition: CardCondition::TimeAfterCard {
             card: "win1",
@@ -513,7 +513,7 @@ pub static ALL_CARDS: &'static [CardSpec] = &[
     CardSpec {
         id: "win3",
         title: "There is virtually no op limit",
-        description: "And you are far from the 9 quintillion ops needed to break the game",
+        description: "You are far from the 9 quintillion ops needed to break the game",
         cost: Cost::nothing(),
         condition: CardCondition::TimeAfterCard {
             card: "win2",
@@ -523,41 +523,41 @@ pub static ALL_CARDS: &'static [CardSpec] = &[
     },
     CardSpec {
         id: "win4",
-        title: "So I offer you a winning condition",
-        description: "So you can go and live to your potential!",
+        title: "Really far",
+        description: "You are 0.00000001% into 9 quintillion ops, in case you're curious",
         cost: Cost::nothing(),
         condition: CardCondition::TimeAfterCard {
             card: "win3",
-            duration: 50_000,
-        },
-        effect: CardEffect::Nothing,
-    },
-    CardSpec {
-        id: "win5",
-        title: "Win the game",
-        description: "It's a symbolic cost, really (and it's an awesome op because you're awesome)",
-        cost: Cost::awesome_ops(1),
-        condition: CardCondition::TimeAfterCard {
-            card: "win4",
             duration: 20_000,
         },
         effect: CardEffect::Nothing,
     },
     CardSpec {
-        id: "win6",
-        title: "Congratulations!",
-        description: "You are a true 10\u{00d7} Cloud Champion! 💪",
+        id: "win5",
+        title: "So I offer you a winning condition",
+        description: "So you can go and live to your potential!",
         cost: Cost::nothing(),
         condition: CardCondition::TimeAfterCard {
+            card: "win4",
+            duration: 50_000,
+        },
+        effect: CardEffect::Nothing,
+    },
+    CardSpec {
+        id: "win6",
+        title: "Win the game",
+        description: "It's a symbolic cost, really (and it's an awesome op because you're awesome)",
+        cost: Cost::awesome_ops(1),
+        condition: CardCondition::TimeAfterCard {
             card: "win5",
-            duration: 5_000,
+            duration: 20_000,
         },
         effect: CardEffect::Nothing,
     },
     CardSpec {
         id: "win7",
-        title: "Thank you for playing 🙏",
-        description: "Written by E_net4 for GitHub GameOff 2023",
+        title: "Congratulations!",
+        description: "You are a true 10\u{00d7} Cloud Champion! 💪",
         cost: Cost::nothing(),
         condition: CardCondition::TimeAfterCard {
             card: "win6",
@@ -567,17 +567,28 @@ pub static ALL_CARDS: &'static [CardSpec] = &[
     },
     CardSpec {
         id: "win8",
-        title: "It's over",
-        description: "Bye bye now 👋",
+        title: "Thank you for playing 🙏",
+        description: "Written by E_net4 for GitHub GameOff 2023",
         cost: Cost::nothing(),
         condition: CardCondition::TimeAfterCard {
             card: "win7",
-            duration: 500_000,
+            duration: 5_000,
         },
         effect: CardEffect::Nothing,
     },
     CardSpec {
         id: "win9",
+        title: "It's over",
+        description: "Bye bye now 👋",
+        cost: Cost::nothing(),
+        condition: CardCondition::TimeAfterCard {
+            card: "win8",
+            duration: 500_000,
+        },
+        effect: CardEffect::Nothing,
+    },
+    CardSpec {
+        id: "lose",
         title: "What a waste of time",
         description: "Don't you have anything else to do?",
         cost: Cost {
@@ -588,8 +599,8 @@ pub static ALL_CARDS: &'static [CardSpec] = &[
             money: Money::zero(),
         },
         condition: CardCondition::TimeAfterCard {
-            card: "win8",
-            duration: 800_000,
+            card: "win9",
+            duration: 750_000,
         },
         effect: CardEffect::Nothing,
     },
