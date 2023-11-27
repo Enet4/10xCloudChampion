@@ -891,7 +891,7 @@ where
                 }
                 // apply bad request count
                 if event.bad {
-                    state.requests_failed += 1;
+                    state.requests_failed += event.amount as u64;
                 }
             }
         }
