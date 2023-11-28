@@ -544,14 +544,23 @@ impl std::iter::Sum for Memory {
 impl fmt::Display for Memory {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         // choose precision and unit based on size
-        if self.0 >= 10_000_000_000 {
+        if self.0 >= 10_000_000_000_000 {
+            // >= 10T, prefer TB
+            let tb = self.0 / 1_000_000_000_000;
+            let gb = (self.0 % 1_000_000_000_000) / 1_000_000_000;
+            if gb == 0 {
+                write!(f, "{}TB", Separating(tb))
+            } else {
+                write!(f, "{}.{:02}TB", Separating(tb), gb / 10)
+            }
+        } else if self.0 >= 10_000_000_000 {
             // >= 10G, prefer GB
             let gb = self.0 / 1_000_000_000;
             let mb = (self.0 % 1_000_000_000) / 1_000_000;
             if mb == 0 {
                 write!(f, "{}GB", Separating(gb))
             } else {
-                write!(f, "{}.{:02}GB", Separating(gb), mb)
+                write!(f, "{}.{:02}GB", Separating(gb), mb / 10)
             }
         } else if self.0 >= 10_000_000 {
             // >= 10M, prefer MB
@@ -560,7 +569,7 @@ impl fmt::Display for Memory {
             if kb == 0 {
                 write!(f, "{}MB", Separating(mb))
             } else {
-                write!(f, "{}.{:02}MB", Separating(mb), kb)
+                write!(f, "{}.{:02}MB", Separating(mb), kb / 10)
             }
         } else if self.0 >= 10_000 {
             // >= 10k, prefer KB
@@ -569,7 +578,7 @@ impl fmt::Display for Memory {
             if b == 0 {
                 write!(f, "{}KB", Separating(kb))
             } else {
-                write!(f, "{}.{:02}KB", Separating(kb), b)
+                write!(f, "{}.{:02}KB", Separating(kb), b / 10)
             }
         } else {
             write!(f, "{}B", Separating(self.0))
