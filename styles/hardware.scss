@@ -235,5 +235,37 @@
             width: 5.5rem;
         }
     }
+}
 
+.datacenter-container {}
+
+.datacenter-icon {
+    position: relative;
+
+    .datacenter-back {
+        border: 1px solid #111;
+        background-color: #ccc;
+        border-radius: 100px 100px 0px 0px;
+        position: absolute;
+        width: 120px;
+        height: 64px;
+    }
+
+    .datacenter-front {
+        border: 1px solid #111;
+        background-color: #ccc;
+        border-radius: 100px 100px 0px 0px;
+        position: absolute;
+        width: 72px;
+        height: 64px;
+    }
+
+    .datacenter-door {
+        position: absolute;
+        color: #111;
+        width: 10px;
+        height: 14px;
+        bottom: 0px;
+        left: 12px;
+    }
 }

@@ -272,14 +272,14 @@ pub struct EquipmentProps {
 
 /// UI component for the whole equipment panel
 #[derive(Debug)]
-pub struct Equipment {}
+pub struct Equipment;
 
 impl Component for Equipment {
     type Message = ();
     type Properties = EquipmentProps;
 
-    fn create(ctx: &Context<Self>) -> Self {
-        Self {}
+    fn create(_ctx: &Context<Self>) -> Self {
+        Self
     }
 
     fn view(&self, ctx: &Context<Self>) -> Html {
@@ -352,9 +352,48 @@ impl Component for Equipment {
             }
             (_, true) => {
                 // show closed datacenters instead
+                let num_racks =
+                    ctx.props().nodes.len() / RACK_CAPACITY as usize / DATACENTER_CAPACITY as usize;
+                let datacenters: Html = ctx
+                    .props()
+                    .nodes
+                    .chunks(DATACENTER_CAPACITY as usize * RACK_CAPACITY as usize)
+                    .enumerate()
+                    .map(|(i, nodes)| {
+                        let num_racks = if i < num_racks as usize {
+                            RACK_CAPACITY
+                        } else {
+                            (nodes.len() % RACK_CAPACITY as usize) as u32
+                        };
+                        let rack_count: Html = if num_racks == 1 {
+                            html! { <span>{"1 rack"}</span> }
+                        } else {
+                            html! { <span>{num_racks} {" racks"}</span> }
+                        };
+                        html! {
+                            <div class="datacenter-container">
+                                <div class="datacenter-icon">
+                                    <div class="datacenter-back"/>
+                                    <div class="datacenter-front"/>
+                                    <div class="datacenter-door"/>
+                                </div>
+                                <div class="buy">
+                                    {rack_count}
+                                    <button onclick={ctx.props().on_player_action.reform(|_| PlayerAction::AddRack)}>
+                                        {"Buy rack"}
+                                    </button>
+                                    <span>
+                                        {UPGRADED_RACK_COST.to_string()}
+                                    </span>
+                                </div>
+                            </div>
+                        }
+                    })
+                    .collect();
+
                 html! {
                     <div class="equipment">
-                        {"TODO datacenters"}
+                        {datacenters}
                     </div>
                 }
             }
