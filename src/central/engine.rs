@@ -495,6 +495,10 @@ where
             }
             CardEffect::UpgradeSpamProtection(rate) => {
                 state.spam_protection = state.spam_protection.max(*rate);
+                if *rate == 1. {
+                    // remove bad actors
+                    state.user_specs.retain(|spec| !spec.bad);
+                }
             }
             CardEffect::UpgradeRoutingLevel(level) => {
                 state.routing_level = state.routing_level.max(*level);

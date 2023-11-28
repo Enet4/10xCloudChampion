@@ -352,23 +352,16 @@ impl Component for Equipment {
             }
             (_, true) => {
                 // show closed datacenters instead
-                let num_racks =
-                    ctx.props().nodes.len() / RACK_CAPACITY as usize / DATACENTER_CAPACITY as usize;
                 let datacenters: Html = ctx
                     .props()
                     .nodes
                     .chunks(DATACENTER_CAPACITY as usize * RACK_CAPACITY as usize)
-                    .enumerate()
-                    .map(|(i, nodes)| {
-                        let num_racks = if i < num_racks as usize {
-                            RACK_CAPACITY
-                        } else {
-                            (nodes.len() % RACK_CAPACITY as usize) as u32
-                        };
+                    .map(|nodes| {
+                        let num_racks = nodes.len() as u32 / RACK_CAPACITY;
                         let rack_count: Html = if num_racks == 1 {
-                            html! { <span>{"1 rack"}</span> }
+                            html! { <span>{nodes.len()} {" nodes, 1 rack"}</span> }
                         } else {
-                            html! { <span>{num_racks} {" racks"}</span> }
+                            html! { <span>{nodes.len()} {" nodes, "} {num_racks} {" racks"}</span> }
                         };
                         html! {
                             <div class="datacenter-container">
@@ -377,14 +370,8 @@ impl Component for Equipment {
                                     <div class="datacenter-front"/>
                                     <div class="datacenter-door"/>
                                 </div>
-                                <div class="buy">
+                                <div class="rack-count">
                                     {rack_count}
-                                    <button onclick={ctx.props().on_player_action.reform(|_| PlayerAction::AddRack)}>
-                                        {"Buy rack"}
-                                    </button>
-                                    <span>
-                                        {UPGRADED_RACK_COST.to_string()}
-                                    </span>
                                 </div>
                             </div>
                         }
@@ -394,6 +381,14 @@ impl Component for Equipment {
                 html! {
                     <div class="equipment">
                         {datacenters}
+                        <div class="buy">
+                            <button onclick={ctx.props().on_player_action.reform(|_| PlayerAction::AddRack)}>
+                                {"Buy rack"}
+                            </button>
+                            <span>
+                                {UPGRADED_RACK_COST.to_string()}
+                            </span>
+                        </div>
                     </div>
                 }
             }

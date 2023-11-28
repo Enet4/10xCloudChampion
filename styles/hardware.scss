@@ -215,6 +215,7 @@
 
     // the div containing the button to buy more things
     .buy {
+        z-index: 10;
         margin-top: 6px;
         margin-left: auto;
         margin-right: auto;
@@ -237,16 +238,23 @@
     }
 }
 
-.datacenter-container {}
+.datacenter-container {
+    .rack-count {
+        text-align: center;
+    }
+}
 
 .datacenter-icon {
     position: relative;
+    width: 150px;
+    height: 64px;
 
     .datacenter-back {
         border: 1px solid #111;
         background-color: #ccc;
-        border-radius: 100px 100px 0px 0px;
+        border-radius: 0px 50px 0px 0px;
         position: absolute;
+        left: 40px;
         width: 120px;
         height: 64px;
     }
@@ -262,9 +270,9 @@
 
     .datacenter-door {
         position: absolute;
-        color: #111;
-        width: 10px;
-        height: 14px;
+        background-color: #111;
+        width: 24px;
+        height: 16px;
         bottom: 0px;
         left: 12px;
     }
