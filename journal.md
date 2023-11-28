@@ -165,6 +165,17 @@ Tweaked cost display.
 Implemented demand rate increase.
 Added winning condition in the form of cards.
 
+## Day 20: 2023-11-27
+
+Implemented the missing routing logic for requests waiting to be routed.
+Tuned lots of the game's static parameters.
+Tweaked cards.
+Fixed a serious bug where
+request processed events were being handled at the wrong node.
+Implement presentation of energy consumption estimates
+and request drop/failure rates.
+Fixed missing bad request client spec spawns.
+
 ## Day 21: 2023-11-28
 
 Implemented UI for racks and datacenters,
