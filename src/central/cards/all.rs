@@ -181,7 +181,7 @@ pub static ALL_CARDS: &'static [CardSpec] = &[
         cost: Cost::money(Money::dollars(400_000))
             .and(Cost::awesome_ops(60_000))
             .and(Cost::epic_ops(100_000)),
-        condition: CardCondition::TotalMemoryUpgrades(40),
+        condition: CardCondition::TotalAwesomeOps(Ops(500)),
         effect: CardEffect::MoreCaching,
     },
     // --- advertisement ---
@@ -280,7 +280,7 @@ pub static ALL_CARDS: &'static [CardSpec] = &[
         description: "Your ultimate brand ambassadors",
         condition: CardCondition::TotalAwesomeOps(Ops(20_000)),
         cost: Cost::dollars(50_000_000).and(Cost::awesome_ops(70_000)),
-        effect: CardEffect::AddPublicityRate(300_000.0, 200.),
+        effect: CardEffect::AddPublicityRate(250_000.0, 150.),
     },
     // --- energy cards ---
     CardSpec {
@@ -353,7 +353,7 @@ pub static ALL_CARDS: &'static [CardSpec] = &[
         title: "Universal introspective malice correction",
         description: "Eliminate bad requests",
         cost: Cost::epic_ops(40_000).and(Cost::awesome_ops(20_000)),
-        condition: CardCondition::RequestsFailed(1_000_000),
+        condition: CardCondition::TotalAwesomeOps(Ops(1_000)),
         effect: CardEffect::UpgradeSpamProtection(1.),
     },
     // --- informative cards ---
