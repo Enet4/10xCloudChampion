@@ -506,25 +506,7 @@ where
     pub fn bootstrap_events(&mut self, state: &WorldState) {
         let time = state.time;
         for user_spec in state.user_specs.iter() {
-            // calculate demand based on base demand and cloud service price
-            let service = match user_spec.service {
-                crate::ServiceKind::Base => &state.base_service,
-                crate::ServiceKind::Super => &state.super_service,
-                crate::ServiceKind::Epic => &state.epic_service,
-                crate::ServiceKind::Awesome => &state.awesome_service,
-            };
-
-            let demand = service.calculate_demand(state.demand);
-            let duration = self.gen.next_request(demand);
-            let timestamp = time + duration as u64;
-            let amount = 1;
-            self.queue.push(RequestEvent::new_arrived(
-                timestamp,
-                Some(user_spec.id),
-                amount,
-                user_spec.service,
-                user_spec.bad,
-            ));
+            self.bootstrap_events_for(state, user_spec);
         }
     }
 
@@ -540,7 +522,7 @@ where
         };
 
         let demand = service.calculate_demand(state.demand);
-        let amount = 1;
+        let (demand, amount) = Self::group_demand(demand);
         let duration = self.gen.next_request(demand);
         let timestamp = time + duration as u64;
         self.queue.push(RequestEvent::new_arrived(
@@ -550,6 +532,21 @@ where
             user_spec.service,
             user_spec.bad,
         ));
+    }
+
+    fn group_demand(demand: f32) -> (f32, u32) {
+        // if demand is very high, combine requests into one set
+        // with a shorter frequency,
+        // to reduce real CPU workload
+        if demand > 100_000. {
+            (demand / 10., 10)
+        } else if demand > 10_000. {
+            (demand / 5., 5)
+        } else if demand > 1_000. {
+            (demand / 2., 2)
+        } else {
+            (demand, 1)
+        }
     }
 
     /// Process the game state and produce new events.
@@ -723,7 +720,7 @@ where
                                 crate::ServiceKind::Awesome => &state.awesome_service,
                             };
                             let demand = service.calculate_demand(state.demand);
-                            let amount = 1;
+                            let (demand, amount) = Self::group_demand(demand);
                             let duration = self.gen.next_request(demand);
                             let timestamp = event.timestamp + duration as u64 * event.amount as u64;
                             push_event(RequestEvent::new_arrived(
