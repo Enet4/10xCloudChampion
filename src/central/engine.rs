@@ -292,7 +292,7 @@ where
 
                 state.funds -= UPGRADED_RACK_COST;
 
-                for _ in (0..RACK_CAPACITY) {
+                for _ in 0..RACK_CAPACITY {
                     let id = state.nodes.len() as u32;
                     state.nodes.push(CloudNode::new_fully_upgraded(id));
                 }
@@ -504,7 +504,6 @@ where
 
     /// Initiate request arrival events based on the current world state
     pub fn bootstrap_events(&mut self, state: &WorldState) {
-        let time = state.time;
         for user_spec in state.user_specs.iter() {
             self.bootstrap_events_for(state, user_spec);
         }
