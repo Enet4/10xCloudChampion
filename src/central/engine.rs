@@ -205,8 +205,7 @@ where
                         amount: state.electricity.total_due,
                     },
                 );
-                state.electricity.total_due = Money::zero();
-                state.electricity.last_bill_time = state.time;
+                state.electricity.pay_bills();
             }
             PlayerAction::ChangePrice { kind, new_price } => {
                 //let demand = state.demand;

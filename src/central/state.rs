@@ -296,7 +296,7 @@ impl WorldState {
 
     pub fn is_powersaving(&self) -> bool {
         self.electricity.total_due > Money::dollars(10)
-            && self.time - self.electricity.last_bill_time >= ELECTRICITY_BILL_PERIOD
+            && self.time - self.electricity.last_bill_time >= (ELECTRICITY_BILL_PERIOD - 100_000)
     }
 }
 
@@ -454,8 +454,8 @@ pub struct Electricity {
     /// the total amount of electricity payment due
     pub total_due: Money,
 
-    /// the timestamp of the last bill
-    /// (or 0 if no bills have been issued yet)
+    /// the timestamp of the last unpaid bill
+    /// (or 0 if there are no bills to pay)
     pub last_bill_time: Time,
 
     /// The amount of energy recently consumed
@@ -495,7 +495,16 @@ impl Electricity {
     pub fn emit_bill_for(&mut self, total_cost: Money, time: Time) {
         self.total_due += total_cost;
         self.consumed = 0.;
-        self.last_bill_time = time;
+        if self.last_bill_time == 0 {
+            self.last_bill_time = time;
+        }
+    }
+
+    /// Reduce total due to zero
+    /// and mark bill as no longer emitted.
+    pub fn pay_bills(&mut self) {
+        self.total_due = Money::zero();
+        self.last_bill_time = 0;
     }
 }
 
