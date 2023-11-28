@@ -73,9 +73,10 @@ pub static ALL_CARDS: &'static [CardSpec] = &[
         title: "Awesome Ops",
         description: "The Cloud services to rule them all",
         cost: Cost::epic_ops(700_000)
-            .and(Cost::super_ops(5_000_000))
+            .and(Cost::super_ops(1_000_000))
+            .and(Cost::base_ops(2_000_000))
             .and(Cost::dollars(166_000)),
-        condition: CardCondition::TotalEpicOps(Ops(428_900)),
+        condition: CardCondition::TotalEpicOps(Ops(468_900)),
         effect: CardEffect::UnlockService(ServiceKind::Awesome),
     },
     CardSpec {
@@ -177,7 +178,7 @@ pub static ALL_CARDS: &'static [CardSpec] = &[
         id: "c3",
         title: "Extrapolating clairvoyant cache system",
         description: "Do caching like it knew almost everything in advance",
-        cost: Cost::money(Money::dollars(500_000))
+        cost: Cost::money(Money::dollars(400_000))
             .and(Cost::awesome_ops(60_000))
             .and(Cost::epic_ops(100_000)),
         condition: CardCondition::TotalMemoryUpgrades(40),
@@ -261,7 +262,7 @@ pub static ALL_CARDS: &'static [CardSpec] = &[
         id: "d5.5",
         title: "SolVision Song Contest ad",
         description: "“These services are out of this world!”",
-        condition: CardCondition::Earned(Money::dollars(265_000)),
+        condition: CardCondition::Earned(Money::dollars(270_000)),
         cost: Cost::dollars(300_000).and(Cost::epic_ops(48_000)),
         effect: CardEffect::AddPublicityRate(9_000., 48.),
     },
@@ -269,7 +270,7 @@ pub static ALL_CARDS: &'static [CardSpec] = &[
         id: "d6",
         title: "Strategic company purchase",
         description: "Make a deal with EWS, your biggest rival",
-        condition: CardCondition::Earned(Money::dollars(10_000_000)),
+        condition: CardCondition::Earned(Money::dollars(8_000_000)),
         cost: Cost::dollars(16_940_000).and(Cost::epic_ops(250_000)),
         effect: CardEffect::AddPublicityRate(60_000.0, 75.),
     },
@@ -394,7 +395,7 @@ pub static ALL_CARDS: &'static [CardSpec] = &[
         title: "Improved routing",
         description: "Distribute routing costs to all nodes",
         condition: CardCondition::TotalCloudNodes(3),
-        cost: Cost::dollars(100).and(Cost::super_ops(800)),
+        cost: Cost::dollars(100).and(Cost::super_ops(1_000)),
         effect: CardEffect::UpgradeRoutingLevel(RoutingLevel::Distributed),
     },
     CardSpec {
@@ -402,7 +403,7 @@ pub static ALL_CARDS: &'static [CardSpec] = &[
         title: "Room for more servers",
         description: "Make space for more racks",
         condition: CardCondition::FullyUpgradedRack,
-        cost: Cost::dollars(250).and(Cost::super_ops(6_000)),
+        cost: Cost::dollars(340).and(Cost::epic_ops(6_000)),
         effect: CardEffect::UnlockMultiRacks,
     },
     CardSpec {
@@ -410,7 +411,7 @@ pub static ALL_CARDS: &'static [CardSpec] = &[
         title: "Geographical expansion",
         description: "Make reservations for more data centers",
         condition: CardCondition::FullyUpgradedDatacenter,
-        cost: Cost::dollars(1_000).and(Cost::super_ops(30_000)),
+        cost: Cost::dollars(70_000).and(Cost::super_ops(30_000)),
         effect: CardEffect::UnlockMultiDatacenters,
     },
     CardSpec {
@@ -418,7 +419,7 @@ pub static ALL_CARDS: &'static [CardSpec] = &[
         title: "Spectral bandwidth 55G routing",
         description: "Eliminate all routing costs",
         condition: CardCondition::TotalCloudNodes(36),
-        cost: Cost::dollars(10_000).and(Cost::awesome_ops(8_000)),
+        cost: Cost::dollars(222_000).and(Cost::awesome_ops(8_000)),
         effect: CardEffect::UpgradeRoutingLevel(RoutingLevel::NoRoutingCost),
     },
     // --- software upgrade cards ---
@@ -434,7 +435,7 @@ pub static ALL_CARDS: &'static [CardSpec] = &[
         id: "s2",
         title: "Profile-guided optimization",
         description: "Improve service performance",
-        cost: Cost::money(Money::dollars(40)).and(Cost::base_ops(750)),
+        cost: Cost::money(Money::dollars(66)).and(Cost::base_ops(750)),
         condition: CardCondition::TotalBaseOps(Ops(2_000)),
         effect: CardEffect::UpgradeServices,
     },
@@ -442,7 +443,7 @@ pub static ALL_CARDS: &'static [CardSpec] = &[
         id: "s3",
         title: "Peer reviewed algorithmic revision",
         description: "Improve service performance",
-        cost: Cost::money(Money::dollars(220)).and(Cost::super_ops(500)),
+        cost: Cost::money(Money::dollars(460)).and(Cost::super_ops(500)),
         condition: CardCondition::TotalSuperOps(Ops(2_000)),
         effect: CardEffect::UpgradeServices,
     },
@@ -450,8 +451,8 @@ pub static ALL_CARDS: &'static [CardSpec] = &[
         id: "s4",
         title: "Rewrite in Rust",
         description: "Improve service performance",
-        cost: Cost::money(Money::dollars(980)).and(Cost::epic_ops(4_000)),
-        condition: CardCondition::TotalEpicOps(Ops(4_000)),
+        cost: Cost::money(Money::dollars(3_600)).and(Cost::epic_ops(8_000)),
+        condition: CardCondition::TotalEpicOps(Ops(6_000)),
         effect: CardEffect::UpgradeServices,
     },
     // test cards
