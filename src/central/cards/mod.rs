@@ -1,4 +1,5 @@
 use crate::{
+    components::hardware::{DATACENTER_CAPACITY, RACK_CAPACITY},
     CloudClientSpec, Cost, Money, Ops, ServiceKind, WorldState, TIME_UNITS_PER_MILLISECOND,
 };
 
@@ -177,7 +178,9 @@ impl CardCondition {
                     && state.nodes[3].cpu_level == (CPU_LEVELS.len() - 1) as u8
                     && state.nodes[3].ram_level == (RAM_LEVELS.len() - 1) as u8
             }
-            Self::FullyUpgradedDatacenter => false, // TODO
+            Self::FullyUpgradedDatacenter => {
+                state.nodes.len() == (RACK_CAPACITY * DATACENTER_CAPACITY) as usize
+            }
         }
     }
 }
