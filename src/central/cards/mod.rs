@@ -2,7 +2,10 @@ use crate::{
     CloudClientSpec, Cost, Money, Ops, ServiceKind, WorldState, TIME_UNITS_PER_MILLISECOND,
 };
 
-use super::{engine::CPU_LEVELS, state::RoutingLevel};
+use super::{
+    engine::{CPU_LEVELS, RAM_LEVELS},
+    state::RoutingLevel,
+};
 
 pub mod all;
 
@@ -165,9 +168,14 @@ impl CardCondition {
                     .sum::<u32>()
                     >= *count
             }
-            Self::FullyUpgradedNode => state.nodes[0].cpu_level == (CPU_LEVELS.len() - 1) as u8,
+            Self::FullyUpgradedNode => {
+                state.nodes[0].cpu_level == (CPU_LEVELS.len() - 1) as u8
+                    && state.nodes[0].ram_level == (RAM_LEVELS.len() - 1) as u8
+            }
             Self::FullyUpgradedRack => {
-                state.nodes.len() == 4 && state.nodes[1].cpu_level == (CPU_LEVELS.len() - 1) as u8
+                state.nodes.len() == 4
+                    && state.nodes[3].cpu_level == (CPU_LEVELS.len() - 1) as u8
+                    && state.nodes[3].ram_level == (RAM_LEVELS.len() - 1) as u8
             }
             Self::FullyUpgradedDatacenter => false, // TODO
         }
