@@ -164,3 +164,13 @@ but there are still some issues to take care of.
 Tweaked cost display.
 Implemented demand rate increase.
 Added winning condition in the form of cards.
+
+## Day 21: 2023-11-28
+
+Implemented UI for racks and datacenters,
+plus letting the player purchase upgraded nodes and racks at once
+(after the respective unlocks).
+Tweaked cards even more.
+Added request grouping optimization to improve performance.
+Fixed powersaving so that it can actually be triggered.
+Tweaked some other pieces of logic.
