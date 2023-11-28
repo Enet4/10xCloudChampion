@@ -49,46 +49,8 @@
     font-size: 0.85rem;
 
     .node {
-        display: inline-block;
         margin-top: auto;
         margin-bottom: auto;
-        position: relative;
-        height: 24px;
-        width: 96px;
-        border: 1px solid #020202;
-        background-color: #999;
-
-        .lines {
-            position: absolute;
-            top: 2px;
-            bottom: 2px;
-            left: 2px;
-            right: 2px;
-            border-top: 1px solid #020202;
-            border-bottom: 1px solid #020202;
-        }
-
-        .led {
-            position: absolute;
-            top: 8px;
-            left: 3px;
-            width: 5px;
-            height: 5px;
-            border-radius: 10px;
-            border: 1px solid #111;
-        }
-
-        .led-ok {
-            animation: led-blink-ok 0.5s step-start infinite;
-        }
-
-        .led-fail {
-            animation: led-blink-problem 0.25s step-start infinite;
-        }
-
-        .led-powersave {
-            animation: led-blink-powersave 0.75s step-start infinite;
-        }
     }
 
     span.specs {
@@ -130,6 +92,47 @@
         button {
             width: 7rem;
         }
+    }
+}
+
+.node {
+    display: inline-block;
+    position: relative;
+    height: 24px;
+    width: 94px;
+    border: 1px solid #020202;
+    background-color: #999;
+
+    .lines {
+        position: absolute;
+        top: 2px;
+        bottom: 2px;
+        left: 2px;
+        right: 2px;
+        border-top: 1px solid #020202;
+        border-bottom: 1px solid #020202;
+    }
+
+    .led {
+        position: absolute;
+        top: 8px;
+        left: 3px;
+        width: 5px;
+        height: 5px;
+        border-radius: 10px;
+        border: 1px solid #111;
+    }
+
+    .led-ok {
+        animation: led-blink-ok 0.5s step-start infinite;
+    }
+
+    .led-fail {
+        animation: led-blink-problem 0.25s step-start infinite;
+    }
+
+    .led-powersave {
+        animation: led-blink-powersave 0.75s step-start infinite;
     }
 }
 
@@ -179,4 +182,32 @@
     margin-top: 8px;
     padding: 2px;
     border: 1px solid #bbb;
+}
+
+.closed-rack {
+    margin-top: 8px;
+    border: 1px solid #111;
+    background-color: #bbb;
+    width: 108px;
+    height: 128px;
+
+    .closed-rack-inner {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+        height: 100px;
+
+        margin: 4px 4px 2px 4px;
+        border: 1px solid #111;
+        background-color: #333;
+    }
+}
+
+.equipment {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    margin: 4px 4px 2px 4px;
 }

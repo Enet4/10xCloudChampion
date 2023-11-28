@@ -8,7 +8,8 @@ use yew::{html::Scope, prelude::*};
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    CloudUserSpec, Memory, Money, Ops, PlayerAction, SampleGenerator, ServiceKind, WorldState,
+    components::hardware::RACK_CAPACITY, CloudUserSpec, Memory, Money, Ops, PlayerAction,
+    SampleGenerator, ServiceKind, WorldState,
 };
 
 use super::{
@@ -57,6 +58,12 @@ pub const BARE_NODE_COST: Money = Money::dollars(2_000);
 pub const UPGRADED_NODE_COST: Money = BARE_NODE_COST
     .plus(Money::dollars(59_000))
     .plus(Money::dollars(9_000));
+
+/// The cost of a fully upgraded rack
+pub const UPGRADED_RACK_COST: Money = UPGRADED_NODE_COST
+    .plus(UPGRADED_NODE_COST)
+    .plus(UPGRADED_NODE_COST)
+    .plus(UPGRADED_NODE_COST);
 
 /// All levels of caching,
 /// namely the memory reserve multiplier (0)
@@ -274,6 +281,22 @@ where
 
                 let id = state.nodes.len() as u32;
                 state.nodes.push(CloudNode::new_fully_upgraded(id));
+            }
+            PlayerAction::AddRack => {
+                // check cost
+                if state.funds < UPGRADED_RACK_COST {
+                    gloo_console::warn!("Not enough funds to purchase a new rack");
+                    return;
+                }
+                // note: whether there is space for the new node
+                // is determined elsewhere
+
+                state.funds -= UPGRADED_RACK_COST;
+
+                for _ in (0..RACK_CAPACITY) {
+                    let id = state.nodes.len() as u32;
+                    state.nodes.push(CloudNode::new_fully_upgraded(id));
+                }
             }
             PlayerAction::UseCard { id } => {
                 // 1. find the card

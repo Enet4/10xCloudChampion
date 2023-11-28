@@ -1,7 +1,7 @@
 use cloud_champion::central::cards::all::ALL_CARDS;
 use cloud_champion::central::engine::GameEngine;
 use cloud_champion::components::business::{Business, BusinessProps};
-use cloud_champion::components::hardware::{Power, Rack};
+use cloud_champion::components::hardware::{Equipment, NodeProps, OpenRack, Power};
 use cloud_champion::components::menu::Menu;
 use cloud_champion::components::services::CloudService;
 use cloud_champion::components::total_stats::{TotalStats, TotalStatsProps};
@@ -401,30 +401,30 @@ impl Component for Game {
         let mem_total: Memory = self.state.nodes.iter().map(|n| n.ram_capacity).sum();
 
         let powersave = self.state.is_powersaving();
-        let nodes = &self.state.nodes;
+        let nodes: Vec<NodeProps> = self
+            .state
+            .nodes
+            .iter()
+            .map(|node| NodeProps {
+                id: node.id,
+                num_cores: node.num_cores,
+                ram_capacity: node.ram_capacity,
+                cpu_upgrade_cost: node.next_cpu_upgrade_cost(),
+                ram_upgrade_cost: node.next_ram_upgrade_cost(),
+                powersave,
+            })
+            .collect();
 
-        let equipment = if nodes.len() <= 4 {
+        let equipment = {
             let link = ctx.link().clone();
             let on_player_action = move |action| link.send_message(action);
             html! {
-                <Rack
+                <Equipment
                     can_buy_nodes={self.state.can_buy_nodes}
                     can_buy_racks={self.state.can_buy_racks}
+                    can_buy_datacenters={self.state.can_buy_datacenters}
                     funds={self.state.funds}
-                    nodes={nodes.clone()}
-                    {powersave}
-                    {on_player_action} />
-            }
-        } else {
-            // TODO multiple racks
-            let link = ctx.link().clone();
-            let on_player_action = move |action| link.send_message(action);
-            html! {
-                <Rack
-                    can_buy_nodes={self.state.can_buy_nodes}
-                    can_buy_racks={self.state.can_buy_racks}
-                    funds={self.state.funds}
-                    nodes={nodes.clone()}
+                    nodes={nodes}
                     {powersave}
                     {on_player_action} />
             }

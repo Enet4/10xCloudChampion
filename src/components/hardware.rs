@@ -4,8 +4,8 @@ use yew::prelude::*;
 
 use crate::{
     audio::play_zip_click,
-    central::engine::{CloudNode, BARE_NODE_COST, UPGRADED_NODE_COST},
-    components::load_bar::LoadBar,
+    central::engine::{BARE_NODE_COST, UPGRADED_NODE_COST},
+    components::{hardware::_EquipmentProps::can_buy_nodes, load_bar::LoadBar},
     Memory, Money, PlayerAction,
 };
 
@@ -36,12 +36,35 @@ pub fn Power(props: &PowerProps) -> Html {
     }
 }
 
-#[derive(Debug, PartialEq, Properties)]
+/// Base properties of a node component.
+#[derive(Debug, Clone, PartialEq, Properties)]
 pub struct NodeProps {
-    /// number of CPUs in the node
-    pub cpus: u32,
-    /// RAM available in the node
-    pub ram: Memory,
+    /// the node's unique ID
+    pub id: u32,
+    /// number of CPU cores in the node
+    pub num_cores: u32,
+    /// the node's total RAM capacity
+    pub ram_capacity: Memory,
+    /// whether the node is in powersave mode
+    pub powersave: bool,
+    /// the cost for the next CPU upgrade
+    /// (or None if no upgrade is available)
+    pub cpu_upgrade_cost: Option<Money>,
+    /// the cost for the next RAM upgrade
+    /// (or None if no upgrade is available)
+    pub ram_upgrade_cost: Option<Money>,
+}
+
+/// Props for a Cloud Node component
+/// which can be upgraded individually.
+#[derive(Debug, PartialEq, Properties)]
+pub struct UpgradableNodeProps {
+    /// the node's unique ID
+    pub id: u32,
+    /// number of CPU cores in the node
+    pub num_cores: u32,
+    /// the node's total RAM capacity
+    pub ram_capacity: Memory,
     /// whether the node is in powersave mode
     pub powersave: bool,
     /// the cost for the next CPU upgrade
@@ -62,8 +85,12 @@ pub struct NodeProps {
 
 /// A node in the Cloud network
 #[function_component]
-pub fn Node(props: &NodeProps) -> Html {
-    let cores = if props.cpus == 1 { "core" } else { "cores" };
+pub fn UpgradableNode(props: &UpgradableNodeProps) -> Html {
+    let cores = if props.num_cores == 1 {
+        "core"
+    } else {
+        "cores"
+    };
 
     let on_cpu_upgrade = {
         let cb = props.on_cpu_upgrade.clone();
@@ -94,7 +121,7 @@ pub fn Node(props: &NodeProps) -> Html {
     html! {
         <div class="node-container">
             <CloudNodeIcon powersave={props.powersave} />
-            <span class="specs">{props.cpus} {" "} {cores} {", "} {props.ram} {" RAM"}</span>
+            <span class="specs">{props.num_cores} {" "} {cores} {", "} {props.ram_capacity} {" RAM"}</span>
             <div class="upgrade-container">
             if let Some(cost) = props.cpu_upgrade_cost {
                 <div class="upgrade">
@@ -144,16 +171,17 @@ pub struct RackProps {
     /// (means all node purchases are for fully upgraded nodes)
     pub can_buy_racks: bool,
     pub funds: Money,
-    pub nodes: Vec<CloudNode>,
+    pub nodes: Vec<NodeProps>,
     pub powersave: bool,
     pub on_player_action: Callback<PlayerAction>,
 }
 
-const RACK_CAPACITY: u32 = 4;
+pub(crate) const RACK_CAPACITY: u32 = 4;
+pub(crate) const DATACENTER_CAPACITY: u32 = 10;
 
 /// A rack of nodes
 #[function_component]
-pub fn Rack(props: &RackProps) -> Html {
+pub fn OpenRack(props: &RackProps) -> Html {
     let can_buy_more_nodes = props.can_buy_nodes && (props.nodes.len() as u32) < RACK_CAPACITY;
     let purchase_button = if can_buy_more_nodes {
         let on_player_action = props.on_player_action.clone();
@@ -188,8 +216,8 @@ pub fn Rack(props: &RackProps) -> Html {
         .nodes
         .iter()
         .map(|node| {
-            let cpu_upgrade_cost = node.next_cpu_upgrade_cost();
-            let ram_upgrade_cost = node.next_ram_upgrade_cost();
+            let cpu_upgrade_cost = node.cpu_upgrade_cost;
+            let ram_upgrade_cost = node.ram_upgrade_cost;
             let cpu_upgrade_disabled = cpu_upgrade_cost
                 .map(|cost| props.funds < cost)
                 .unwrap_or_default();
@@ -207,8 +235,9 @@ pub fn Rack(props: &RackProps) -> Html {
                 move |_| on_player_action.emit(PlayerAction::UpgradeRam { node })
             };
             html! {
-                <Node
-                    cpus={node.num_cores} ram={node.ram_capacity}
+                <UpgradableNode
+                    id={node.id}
+                    num_cores={node.num_cores} ram_capacity={node.ram_capacity}
                     {powersave}
                     {cpu_upgrade_cost}
                     {ram_upgrade_cost}
@@ -216,7 +245,7 @@ pub fn Rack(props: &RackProps) -> Html {
                     {ram_upgrade_disabled}
                     {on_cpu_upgrade}
                     {on_ram_upgrade}
-                    />
+                 />
             }
         })
         .collect();
@@ -226,5 +255,99 @@ pub fn Rack(props: &RackProps) -> Html {
             {nodes}
             {purchase_button}
         </div>
+    }
+}
+
+/// Properties for the Equipment component
+#[derive(Debug, Clone, PartialEq, Properties)]
+pub struct EquipmentProps {
+    pub nodes: Vec<NodeProps>,
+    pub can_buy_nodes: bool,
+    pub can_buy_racks: bool,
+    pub can_buy_datacenters: bool,
+    pub funds: Money,
+    pub powersave: bool,
+    pub on_player_action: Callback<PlayerAction>,
+}
+
+/// UI component for the whole equipment panel
+#[derive(Debug)]
+pub struct Equipment {}
+
+impl Component for Equipment {
+    type Message = ();
+    type Properties = EquipmentProps;
+
+    fn create(ctx: &Context<Self>) -> Self {
+        Self {}
+    }
+
+    fn view(&self, ctx: &Context<Self>) -> Html {
+        let powersave = ctx.props().powersave;
+        let can_buy_racks = ctx.props().can_buy_racks;
+        let can_buy_datacenters = ctx.props().can_buy_datacenters;
+
+        match (can_buy_racks, can_buy_datacenters) {
+            (false, false) => {
+                let nodes = ctx.props().nodes.clone();
+                html! {
+                    <div class="equipment">
+                        <OpenRack
+                            nodes={nodes}
+                            can_buy_nodes={false}
+                            can_buy_racks={false}
+                            funds={ctx.props().funds}
+                            powersave={powersave}
+                            on_player_action={ctx.props().on_player_action.clone()}
+                        />
+                    </div>
+                }
+            }
+            (true, false) => {
+                // show closed racks instead
+                let racks: Html = ctx
+                    .props()
+                    .nodes
+                    .chunks(RACK_CAPACITY as usize)
+                    .map(|nodes| {
+                        html! {
+                            <div class="closed-rack">
+                                <div class="closed-rack-inner">
+                                    {nodes.iter().map(|node| {
+                                        html! {
+                                            <CloudNodeIcon powersave={node.powersave} />
+                                        }
+                                    }).collect::<Html>()}
+                                </div>
+                            </div>
+                        }
+                    })
+                    .collect();
+
+                html! {
+                    <div class="equipment">
+                        {racks}
+                        // show buy button if available
+                        if ctx.props().nodes.len() < DATACENTER_CAPACITY as usize * RACK_CAPACITY as usize {
+                            <button onclick={ctx.props().on_player_action.reform(|_| PlayerAction::AddUpgradedNode)}>
+                                {"Buy node"}
+                            </button>
+                        } else if ctx.props().can_buy_datacenters {
+                            <button onclick={ctx.props().on_player_action.reform(|_| PlayerAction::AddRack)}>
+                                {"Buy rack"}
+                            </button>
+                        }
+                    </div>
+                }
+            }
+            (_, true) => {
+                // show closed datacenters instead
+                html! {
+                    <div class="equipment">
+                        {"TODO datacenters"}
+                    </div>
+                }
+            }
+        }
     }
 }
