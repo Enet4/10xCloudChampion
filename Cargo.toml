@@ -33,6 +33,10 @@ web-sys = { version = "0.3.65", features = [
 ] }
 yew = { version = "0.21", features = ["csr"] }
 
+# optimize all of the game for slightly better performance
+[profile.dev]
+opt-level = 1
+
 # optimize some dev dependencies for better performance during development
 [profile.dev.package."yew"]
 opt-level = "s"
