@@ -4,8 +4,8 @@ use yew::prelude::*;
 
 use crate::{
     audio::play_zip_click,
-    central::engine::{BARE_NODE_COST, UPGRADED_NODE_COST},
-    components::{hardware::_EquipmentProps::can_buy_nodes, load_bar::LoadBar},
+    central::engine::{BARE_NODE_COST, UPGRADED_NODE_COST, UPGRADED_RACK_COST},
+    components::load_bar::LoadBar,
     Memory, Money, PlayerAction,
 };
 
@@ -329,13 +329,23 @@ impl Component for Equipment {
                         {racks}
                         // show buy button if available
                         if ctx.props().nodes.len() < DATACENTER_CAPACITY as usize * RACK_CAPACITY as usize {
-                            <button onclick={ctx.props().on_player_action.reform(|_| PlayerAction::AddUpgradedNode)}>
-                                {"Buy node"}
-                            </button>
+                            <div class="buy">
+                                <button onclick={ctx.props().on_player_action.reform(|_| PlayerAction::AddUpgradedNode)}>
+                                    {"Buy node"}
+                                </button>
+                                <span>
+                                    {UPGRADED_NODE_COST.to_string()}
+                                </span>
+                            </div>
                         } else if ctx.props().can_buy_datacenters {
-                            <button onclick={ctx.props().on_player_action.reform(|_| PlayerAction::AddRack)}>
-                                {"Buy rack"}
-                            </button>
+                            <div class="buy">
+                                <button onclick={ctx.props().on_player_action.reform(|_| PlayerAction::AddRack)}>
+                                    {"Buy rack"}
+                                </button>
+                                <span>
+                                    {UPGRADED_RACK_COST.to_string()}
+                                </span>
+                            </div>
                         }
                     </div>
                 }

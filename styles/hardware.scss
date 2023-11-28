@@ -207,7 +207,33 @@
 .equipment {
     display: flex;
     flex-direction: row;
+    flex-wrap: wrap;
     align-items: center;
     justify-content: flex-start;
     margin: 4px 4px 2px 4px;
+
+
+    // the div containing the button to buy more things
+    .buy {
+        margin-top: 6px;
+        margin-left: auto;
+        margin-right: auto;
+        display: flex;
+        padding: 2px;
+        flex-direction: column;
+        align-items: center;
+
+        span {
+            display: inline-block;
+            margin-left: 4px;
+            margin-right: 4px;
+            text-align: center;
+            width: 3.5rem;
+        }
+
+        button {
+            width: 5.5rem;
+        }
+    }
+
 }
