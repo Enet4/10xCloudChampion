@@ -364,7 +364,7 @@ where
                 }
 
                 // add user specification for this service
-                if state.user_specs.iter().all(|spec| spec.service != *kind) {
+                if !state.user_specs.iter().any(|spec| spec.service == *kind && !spec.bad) {
                     state.user_specs.push(CloudUserSpec {
                         id: state.next_user_spec_id(),
                         service: *kind,
