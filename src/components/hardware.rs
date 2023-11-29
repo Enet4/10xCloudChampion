@@ -294,7 +294,7 @@ impl Component for Equipment {
                     <div class="equipment">
                         <OpenRack
                             nodes={nodes}
-                            can_buy_nodes={false}
+                            can_buy_nodes={ctx.props().can_buy_nodes}
                             can_buy_racks={false}
                             funds={ctx.props().funds}
                             powersave={powersave}
