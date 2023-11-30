@@ -278,8 +278,8 @@ pub static ALL_CARDS: &'static [CardSpec] = &[
         id: "d7",
         title: "Hypnodrones",
         description: "Your ultimate brand ambassadors",
-        condition: CardCondition::TotalAwesomeOps(Ops(20_000)),
-        cost: Cost::dollars(50_000_000).and(Cost::awesome_ops(70_000)),
+        condition: CardCondition::TotalAwesomeOps(Ops(300_000)),
+        cost: Cost::dollars(50_000_000).and(Cost::awesome_ops(370_000)),
         effect: CardEffect::AddPublicityRate(250_000.0, 150.),
     },
     // --- energy cards ---
