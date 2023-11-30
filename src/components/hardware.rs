@@ -329,9 +329,13 @@ impl Component for Equipment {
                     <div class="equipment">
                         {racks}
                         // show buy button if available
-                        if ctx.props().nodes.len() < (DATACENTER_CAPACITY * RACK_CAPACITY) as usize {
+                        // (first office only has room for 10 racks)
+                        if ctx.props().nodes.len() < (10 * RACK_CAPACITY) as usize {
                             <div class="buy">
-                                <button onclick={ctx.props().on_player_action.reform(|_| PlayerAction::AddUpgradedNode)}>
+                                <button onclick={ctx.props().on_player_action.reform(|_| {
+                                    play_zip_click();
+                                    PlayerAction::AddUpgradedNode
+                                })}>
                                     {"Buy node"}
                                 </button>
                                 <span>
@@ -340,7 +344,10 @@ impl Component for Equipment {
                             </div>
                         } else if ctx.props().can_buy_datacenters {
                             <div class="buy">
-                                <button onclick={ctx.props().on_player_action.reform(|_| PlayerAction::AddRack)}>
+                                <button onclick={ctx.props().on_player_action.reform(|_| {
+                                    play_zip_click();
+                                    PlayerAction::AddRack
+                                })}>
                                     {"Buy rack"}
                                 </button>
                                 <span>
@@ -383,7 +390,10 @@ impl Component for Equipment {
                     <div class="equipment">
                         {datacenters}
                         <div class="buy">
-                            <button onclick={ctx.props().on_player_action.reform(|_| PlayerAction::AddRack)}>
+                            <button onclick={ctx.props().on_player_action.reform(|_| {
+                                play_zip_click();
+                                PlayerAction::AddRack
+                            })}>
                                 {"Buy rack"}
                             </button>
                             <span>

@@ -205,7 +205,7 @@ impl GameEngine {
 
                 let x = service.calculate_demand(demand);
                 gloo_console::debug!("Demand based on price changed to ", x);
-                let (y, z) = Self::group_demand(x, kind);
+                let (y, z) = Self::group_demand(x);
                 gloo_console::debug!("Group demand for this service is: ", y, z);
             }
             PlayerAction::UpgradeCpu { node } => {
@@ -517,7 +517,7 @@ impl GameEngine {
         };
 
         let demand = service.calculate_demand(state.demand);
-        let (demand, amount) = Self::group_demand(demand, user_spec.service);
+        let (demand, amount) = Self::group_demand(demand);
         let duration = self.gen.next_request(demand);
         let timestamp = time + duration as u64;
         self.queue.push(RequestEvent::new_arrived(
@@ -529,23 +529,13 @@ impl GameEngine {
         ));
     }
 
-    fn group_demand(demand: f32, service: ServiceKind) -> (f32, u32) {
-        if service == ServiceKind::Awesome {
-            return (demand, 1);
-        }
-
+    fn group_demand(demand: f32) -> (f32, u32) {
         // if demand is very high, combine requests into one set
         // with a shorter frequency,
         // to reduce real CPU workload
-
-        if demand > 1_000_000. {
-            (demand / 100., 100)
-        } else if demand > 100_000. {
-            (demand / 10., 10)
-        } else if demand > 10_000. {
-            (demand / 5., 5)
-        } else if demand > 1_000. {
-            (demand / 2., 2)
+        if demand > 14_000. {
+            let k = (demand / 12_000.).ceil();
+            (demand / k, k as u32)
         } else {
             (demand, 1)
         }
@@ -722,7 +712,7 @@ impl GameEngine {
                                 crate::ServiceKind::Awesome => &state.awesome_service,
                             };
                             let demand = service.calculate_demand(state.demand);
-                            let (demand, amount) = Self::group_demand(demand, event.service);
+                            let (demand, amount) = Self::group_demand(demand);
                             let duration = self.gen.next_request(demand);
                             let timestamp = event.timestamp + duration as u64 * event.amount as u64;
                             push_event(RequestEvent::new_arrived(
@@ -934,7 +924,7 @@ impl GameEngine {
                         bad,
                         kind: RequestEventStage::RequestProcessed {
                             node_num,
-                            ram_required,
+                            ram_required: request.mem_required,
                         },
                     })
                 } else {
@@ -1201,7 +1191,7 @@ impl CloudNode {
     /// Check how many cores are available for processing requests.
     pub(crate) fn free_cores(&self, powersave: bool) -> u32 {
         if powersave {
-            (self.num_cores / 4 - self.processing).max(0)
+            (self.num_cores / 4).saturating_sub(self.processing)
         } else {
             self.num_cores - self.processing
         }
