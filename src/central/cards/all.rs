@@ -320,7 +320,7 @@ pub static ALL_CARDS: &'static [CardSpec] = &[
         title: "Dedicated Power Plant",
         description: "All systems powered by your own energy",
         cost: Cost::dollars(280_000).and(Cost::epic_ops(222_000)),
-        condition: CardCondition::TotalCloudNodes(13),
+        condition: CardCondition::TotalCloudNodes(17),
         effect: CardEffect::SetElectricityCostLevel(5),
     },
     CardSpec {
@@ -345,7 +345,7 @@ pub static ALL_CARDS: &'static [CardSpec] = &[
         title: "Adversarial generative spam network detection",
         description: "Detect more cases of DoS attacks",
         cost: Cost::super_ops(4_000).and(Cost::epic_ops(2_000)),
-        condition: CardCondition::RequestsFailed(20_000),
+        condition: CardCondition::RequestsFailed(25_000),
         effect: CardEffect::UpgradeSpamProtection(0.875),
     },
     CardSpec {
@@ -353,7 +353,7 @@ pub static ALL_CARDS: &'static [CardSpec] = &[
         title: "Universal introspective malice correction",
         description: "Eliminate bad requests",
         cost: Cost::epic_ops(40_000).and(Cost::awesome_ops(20_000)),
-        condition: CardCondition::TotalAwesomeOps(Ops(1_000)),
+        condition: CardCondition::TotalAwesomeOps(Ops(5_000)),
         effect: CardEffect::UpgradeSpamProtection(1.),
     },
     // --- informative cards ---
@@ -378,7 +378,7 @@ pub static ALL_CARDS: &'static [CardSpec] = &[
         title: "Service metric ingestion pipeline",
         description: "Estimate request drop & failure rates",
         condition: CardCondition::TotalEpicOps(Ops(500)),
-        cost: Cost::dollars(500).and(Cost::epic_ops(700)),
+        cost: Cost::dollars(500).and(Cost::epic_ops(750)),
         effect: CardEffect::UnlockRequestRateEstimate,
     },
     // --- hardware scaling cards ---
@@ -451,8 +451,8 @@ pub static ALL_CARDS: &'static [CardSpec] = &[
         id: "s4",
         title: "Rewrite in Rust",
         description: "Improve service performance",
-        cost: Cost::money(Money::dollars(3_600)).and(Cost::epic_ops(8_000)),
-        condition: CardCondition::TotalEpicOps(Ops(6_000)),
+        cost: Cost::money(Money::dollars(3_600)).and(Cost::epic_ops(48_000)),
+        condition: CardCondition::TotalEpicOps(Ops(40_000)),
         effect: CardEffect::UpgradeServices,
     },
     // test cards
