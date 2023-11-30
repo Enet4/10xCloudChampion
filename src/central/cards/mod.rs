@@ -178,9 +178,7 @@ impl CardCondition {
                     && state.nodes[3].cpu_level == (CPU_LEVELS.len() - 1) as u8
                     && state.nodes[3].ram_level == (RAM_LEVELS.len() - 1) as u8
             }
-            Self::FullyUpgradedDatacenter => {
-                state.nodes.len() == (RACK_CAPACITY * DATACENTER_CAPACITY) as usize
-            }
+            Self::FullyUpgradedDatacenter => state.nodes.len() == (RACK_CAPACITY * 10) as usize,
         }
     }
 }
