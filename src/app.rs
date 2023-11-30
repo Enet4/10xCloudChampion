@@ -1,5 +1,5 @@
 use cloud_champion::central::cards::all::ALL_CARDS;
-use cloud_champion::central::engine::GameEngine;
+use cloud_champion::central::engine::{CloudNode, GameEngine};
 use cloud_champion::components::business::{Business, BusinessProps};
 use cloud_champion::components::hardware::{Equipment, NodeProps, Power};
 use cloud_champion::components::menu::Menu;
@@ -116,13 +116,24 @@ impl Component for Game {
             GameStateOrigin::New => WorldState::default(),
             GameStateOrigin::Continue => {
                 // load from local storage
-                WorldState::load_game()
+                let mut state = WorldState::load_game()
                     .expect_throw("Failed to load game state from local storage")
-                    .unwrap_or_default()
+                    .unwrap_or_default();
+
+                if state.can_buy_datacenters && state.nodes[0].num_cores <= 64 {
+                    // transform old save game for rack nodes
+                    let num_racks = state.nodes.len() as u32 / 4;
+                    state.nodes.clear();
+
+                    for id in 0..num_racks {
+                        state.nodes.push(CloudNode::new_fully_upgraded_rack(id));
+                    }
+                }
+
+                state
             }
         };
 
-        let link = ctx.link().clone();
         let mut out = Self {
             state,
             engine: GameEngine::new(),
