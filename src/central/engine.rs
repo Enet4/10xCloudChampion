@@ -280,10 +280,8 @@ impl GameEngine {
 
                 state.funds -= UPGRADED_RACK_COST;
 
-                for _ in 0..RACK_CAPACITY {
-                    let id = state.nodes.len() as u32;
-                    state.nodes.push(CloudNode::new_fully_upgraded(id));
-                }
+                let id = state.nodes.len() as u32;
+                state.nodes.push(CloudNode::new_fully_upgraded_rack(id));
             }
             PlayerAction::UseCard { id } => {
                 // 1. find the card
@@ -484,6 +482,20 @@ impl GameEngine {
             }
             CardEffect::UnlockMultiDatacenters => {
                 state.can_buy_datacenters = true;
+
+                // transform all nodes into datacenter nodes
+                let racks = state.nodes.len() as u32 / RACK_CAPACITY;
+                state.nodes.clear();
+
+                for id in 0..racks {
+                    state
+                        .nodes
+                        .push(CloudNode::new_fully_upgraded_rack(id as u32));
+                }
+
+                // clean up events in the queue
+                // (because requests become dangling)
+                self.queue.clear_in_nodes();
             }
             CardEffect::UpgradeSpamProtection(rate) => {
                 state.spam_protection = state.spam_protection.max(*rate);

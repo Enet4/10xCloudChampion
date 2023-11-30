@@ -129,6 +129,13 @@ impl RequestEventQueue {
     pub fn last_time(&self) -> Time {
         self.last_time
     }
+
+    /// Clear all request events for things already in the system.
+    /// (all but the ones yet to arrive)
+    pub fn clear_in_nodes(&mut self) {
+        self.queue
+            .retain(|event| matches!(event.kind, RequestEventStage::RequestArrived { .. }));
+    }
 }
 
 #[cfg(test)]

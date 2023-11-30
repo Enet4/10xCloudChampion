@@ -409,9 +409,9 @@ pub static ALL_CARDS: &'static [CardSpec] = &[
     CardSpec {
         id: "n5",
         title: "Geographical expansion",
-        description: "Make reservations for more data centers",
+        description: "Relocate and make reservations for large data centers",
         condition: CardCondition::FullyUpgradedDatacenter,
-        cost: Cost::dollars(70_000).and(Cost::super_ops(30_000)),
+        cost: Cost::dollars(75_000).and(Cost::super_ops(55_000)),
         effect: CardEffect::UnlockMultiDatacenters,
     },
     CardSpec {

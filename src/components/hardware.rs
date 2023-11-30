@@ -359,17 +359,19 @@ impl Component for Equipment {
                 }
             }
             (_, true) => {
-                // show closed datacenters instead
+                // show closed datacenters instead,
+                // and each node is actually a rack
                 let datacenters: Html = ctx
                     .props()
                     .nodes
-                    .chunks(DATACENTER_CAPACITY as usize * RACK_CAPACITY as usize)
+                    .chunks(DATACENTER_CAPACITY as usize)
                     .map(|nodes| {
-                        let num_racks = nodes.len() as u32 / RACK_CAPACITY;
+                        let num_racks = nodes.len() as u32;
+                        let num_nodes = num_racks * RACK_CAPACITY;
                         let rack_count: Html = if num_racks == 1 {
-                            html! { <span>{nodes.len()} {" nodes, 1 rack"}</span> }
+                            html! { <span>{num_nodes} {" nodes, 1 rack"}</span> }
                         } else {
-                            html! { <span>{nodes.len()} {" nodes, "} {num_racks} {" racks"}</span> }
+                            html! { <span>{num_nodes} {" nodes, "} {num_racks} {" racks"}</span> }
                         };
                         html! {
                             <div class="datacenter-container">
