@@ -301,7 +301,17 @@ impl fmt::Display for Money {
 
         let dollars = self.0 / 100_000;
         let millicents = self.0 % 100_000;
-        if millicents == 0 && dollars > 1_000 && dollars % 100 == 0 {
+
+        if dollars >= 1_000_000 && millicents == 0 {
+            // no fraction smaller than $1000000, show in millions
+            let mdollars = dollars / 1_000_000;
+            let rest_dollars = dollars % 1_000_000 / 100_000;
+            if rest_dollars == 0 {
+                write!(f, "${}M", Separating(mdollars))
+            } else {
+                write!(f, "${}.{:01}M", Separating(mdollars), rest_dollars)
+            }
+        } else if millicents == 0 && dollars > 1_000 && dollars % 100 == 0 {
             // no fraction smaller than $100, show in thousands
             let kdollars = dollars / 1_000;
             let rest_dollars = dollars % 1_000 / 100;
