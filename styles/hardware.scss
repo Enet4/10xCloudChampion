@@ -122,18 +122,18 @@
         border-radius: 10px;
         border: 1px solid #111;
     }
+}
 
-    .led-ok {
-        animation: led-blink-ok 0.5s step-start infinite;
-    }
+.led-ok {
+    animation: led-blink-ok 0.5s step-start infinite;
+}
 
-    .led-fail {
-        animation: led-blink-problem 0.25s step-start infinite;
-    }
+.led-fail {
+    animation: led-blink-problem 0.25s step-start infinite;
+}
 
-    .led-powersave {
-        animation: led-blink-powersave 0.75s step-start infinite;
-    }
+.led-powersave {
+    animation: led-blink-powersave 0.75s step-start infinite;
 }
 
 @keyframes led-blink-ok {
@@ -251,8 +251,9 @@
 
     .datacenter-back {
         border: 1px solid #111;
-        background-color: #ccc;
-        border-radius: 0px 50px 0px 0px;
+        // linear gradient
+        background: linear-gradient(to bottom, #cdcdcd, #9f9f9f);
+        border-radius: 0px 36px 0px 0px;
         position: absolute;
         left: 40px;
         width: 120px;
@@ -262,7 +263,7 @@
     .datacenter-front {
         border: 1px solid #111;
         background-color: #ccc;
-        border-radius: 100px 100px 0px 0px;
+        border-radius: 36px 36px 0px 0px;
         position: absolute;
         width: 72px;
         height: 64px;
@@ -271,9 +272,20 @@
     .datacenter-door {
         position: absolute;
         background-color: #111;
-        width: 24px;
+        width: 36px;
         height: 16px;
         bottom: 0px;
-        left: 12px;
+        left: 16px;
     }
+
+    .datacenter-led {
+        position: absolute;
+        bottom: 40px;
+        left: 10px;
+        width: 6px;
+        height: 6px;
+        border-radius: 8px;
+        border: 1px solid #111;
+    }
+
 }

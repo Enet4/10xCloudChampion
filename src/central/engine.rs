@@ -3,7 +3,6 @@
 //! and processes it over time.
 
 use std::collections::VecDeque;
-use yew::{html::Scope, prelude::*};
 
 use serde::{Deserialize, Serialize};
 

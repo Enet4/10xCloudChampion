@@ -373,12 +373,18 @@ impl Component for Equipment {
                         } else {
                             html! { <span>{num_nodes} {" nodes, "} {num_racks} {" racks"}</span> }
                         };
+                        let leds = if ctx.props().powersave {
+                            classes!["datacenter-led", "led-powersave"]
+                        } else {
+                            classes!["datacenter-led", "led-ok"]
+                        };
                         html! {
                             <div class="datacenter-container">
                                 <div class="datacenter-icon">
                                     <div class="datacenter-back"/>
                                     <div class="datacenter-front"/>
                                     <div class="datacenter-door"/>
+                                    <div class={leds}/>
                                 </div>
                                 <div class="rack-count">
                                     {rack_count}
