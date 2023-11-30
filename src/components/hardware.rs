@@ -9,6 +9,10 @@ use crate::{
     Memory, Money, PlayerAction,
 };
 
+/// The number of nodes that fit in a rack
+pub(crate) const RACK_CAPACITY: u32 = 4;
+pub(crate) const DATACENTER_CAPACITY: u32 = 32;
+
 #[derive(Debug, PartialEq, Properties)]
 pub struct PowerProps {
     /// the current CPU load between 0 and 1
@@ -176,9 +180,6 @@ pub struct RackProps {
     pub on_player_action: Callback<PlayerAction>,
 }
 
-pub(crate) const RACK_CAPACITY: u32 = 4;
-pub(crate) const DATACENTER_CAPACITY: u32 = 10;
-
 /// A rack of nodes
 #[function_component]
 pub fn OpenRack(props: &RackProps) -> Html {
@@ -328,7 +329,7 @@ impl Component for Equipment {
                     <div class="equipment">
                         {racks}
                         // show buy button if available
-                        if ctx.props().nodes.len() < DATACENTER_CAPACITY as usize * RACK_CAPACITY as usize {
+                        if ctx.props().nodes.len() < (DATACENTER_CAPACITY * RACK_CAPACITY) as usize {
                             <div class="buy">
                                 <button onclick={ctx.props().on_player_action.reform(|_| PlayerAction::AddUpgradedNode)}>
                                     {"Buy node"}

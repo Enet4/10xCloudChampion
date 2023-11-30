@@ -624,6 +624,19 @@ impl ServiceKind {
             Self::Awesome => 3,
         }
     }
+
+    /**
+     * The memory required per individual operation of this service tier.
+     */
+    #[inline]
+    pub(crate) fn mem_required(&self) -> Memory {
+        match self {
+            Self::Base => Memory::kb(512),
+            Self::Super => Memory::kb(768),
+            Self::Epic => Memory::mb(1),
+            Self::Awesome => Memory::mb(4),
+        }
+    }
 }
 
 #[cfg(test)]

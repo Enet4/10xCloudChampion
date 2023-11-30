@@ -17,7 +17,7 @@ use cloud_champion::components::panel::Panel;
 #[derive(Debug)]
 pub(crate) struct Playground {
     state: WorldState,
-    engine: GameEngine<Playground>,
+    engine: GameEngine,
     watch: GameWatch,
 }
 

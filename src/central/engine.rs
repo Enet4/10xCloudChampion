@@ -136,14 +136,11 @@ pub static GAME_SAVE_PERIOD: u64 = 360_000;
 /// The main game engine, which processes the game state
 /// and produces new events.
 #[derive(Debug)]
-pub struct GameEngine<C: Component> {
+pub struct GameEngine {
     /// the event queue
     queue: RequestEventQueue,
     /// the number generator
     gen: SampleGenerator,
-    /// link to the main game component's context,
-    /// so that we can send messages back to it
-    link: Scope<C>,
     /// a waiting queue where requests are placed
     /// when no node is available to process them
     waiting_queue: VecDeque<WaitingRouteRequest>,
@@ -165,19 +162,12 @@ pub struct GameEngine<C: Component> {
     pub failure_rate: f32,
 }
 
-impl<C> GameEngine<C>
-where
-    C: Component,
-{
-    pub fn new(link: Scope<C>) -> Self
-    where
-        C: BaseComponent,
-    {
+impl GameEngine {
+    pub fn new() -> Self {
         GameEngine {
             queue: RequestEventQueue::new(),
             gen: SampleGenerator::new(),
             waiting_queue: VecDeque::new(),
-            link,
             recent_requests_fulfilled: 0,
             recent_requests_dropped: 0,
             recent_requests_failed: 0,
@@ -208,17 +198,15 @@ where
                 state.electricity.pay_bills();
             }
             PlayerAction::ChangePrice { kind, new_price } => {
-                //let demand = state.demand;
+                let demand = state.demand;
                 // change the price and recalculate demand
                 let service = state.service_by_kind_mut(kind);
                 service.price = new_price;
 
-                /*
-                gloo_console::debug!(
-                    "Demand based on price changed to ",
-                    service.calculate_demand(demand)
-                );
-                */
+                let x = service.calculate_demand(demand);
+                gloo_console::debug!("Demand based on price changed to ", x);
+                let (y, z) = Self::group_demand(x, kind);
+                gloo_console::debug!("Group demand for this service is: ", y, z);
             }
             PlayerAction::UpgradeCpu { node } => {
                 let funds = state.funds;
@@ -364,7 +352,11 @@ where
                 }
 
                 // add user specification for this service
-                if !state.user_specs.iter().any(|spec| spec.service == *kind && !spec.bad) {
+                if !state
+                    .user_specs
+                    .iter()
+                    .any(|spec| spec.service == *kind && !spec.bad)
+                {
                     state.user_specs.push(CloudUserSpec {
                         id: state.next_user_spec_id(),
                         service: *kind,
@@ -525,7 +517,7 @@ where
         };
 
         let demand = service.calculate_demand(state.demand);
-        let (demand, amount) = Self::group_demand(demand);
+        let (demand, amount) = Self::group_demand(demand, user_spec.service);
         let duration = self.gen.next_request(demand);
         let timestamp = time + duration as u64;
         self.queue.push(RequestEvent::new_arrived(
@@ -537,11 +529,18 @@ where
         ));
     }
 
-    fn group_demand(demand: f32) -> (f32, u32) {
+    fn group_demand(demand: f32, service: ServiceKind) -> (f32, u32) {
+        if service == ServiceKind::Awesome {
+            return (demand, 1);
+        }
+
         // if demand is very high, combine requests into one set
         // with a shorter frequency,
         // to reduce real CPU workload
-        if demand > 100_000. {
+
+        if demand > 1_000_000. {
+            (demand / 100., 100)
+        } else if demand > 100_000. {
             (demand / 10., 10)
         } else if demand > 10_000. {
             (demand / 5., 5)
@@ -723,7 +722,7 @@ where
                                 crate::ServiceKind::Awesome => &state.awesome_service,
                             };
                             let demand = service.calculate_demand(state.demand);
-                            let (demand, amount) = Self::group_demand(demand);
+                            let (demand, amount) = Self::group_demand(demand, event.service);
                             let duration = self.gen.next_request(demand);
                             let timestamp = event.timestamp + duration as u64 * event.amount as u64;
                             push_event(RequestEvent::new_arrived(
@@ -802,7 +801,7 @@ where
                 }
 
                 // 4. check memory requirement for request
-                let mem_required = node.ram_per_request * event.amount as i32;
+                let mem_required = event.service.mem_required() * event.amount as i32;
                 if mem_required > node.ram_capacity - node.ram_usage {
                     // 4.1. if not enough memory, drop the request.
                     state.requests_dropped += event.amount as u64;
@@ -813,7 +812,7 @@ where
                 node.ram_usage += mem_required;
 
                 // 6. if node has a CPU available,
-                if !node.is_busy(powersave) {
+                if node.free_cores(powersave) >= 1 {
                     // calculate time to process the request
                     let mut duration =
                         node.time_per_request(event.service, software_level) * event.amount;
@@ -1036,9 +1035,6 @@ pub struct CloudNode {
     /// which translates to the number of base requests fulfilled per core
     /// (higher tiered services will have a lower speed)
     pub cpu_speed: u32,
-    /// the amount of RAM required to process
-    /// a base request in one of the cores
-    pub ram_per_request: Memory,
 
     /// the number of requests currently being processed right now
     ///
@@ -1074,7 +1070,6 @@ impl CloudNode {
             num_cores: CPU_LEVELS[0].0,
             ram_capacity: RAM_LEVELS[0].0,
             cpu_speed: CPU_LEVELS[0].1,
-            ram_per_request: Memory::kb(512),
             processing: 0,
             ram_usage: Memory::zero(),
             ram_reserved: Memory::zero(),
@@ -1090,7 +1085,22 @@ impl CloudNode {
             num_cores: CPU_LEVELS[CPU_LEVELS.len() - 1].0,
             ram_capacity: RAM_LEVELS[RAM_LEVELS.len() - 1].0,
             cpu_speed: CPU_LEVELS[CPU_LEVELS.len() - 1].1,
-            ram_per_request: Memory::kb(512),
+            processing: 0,
+            ram_usage: Memory::zero(),
+            ram_reserved: Memory::zero(),
+            requests: VecDeque::new(),
+        }
+    }
+
+    /// A node with the capabilities resembling a fully beefed rack
+    pub fn new_fully_upgraded_rack(id: u32) -> Self {
+        Self {
+            id,
+            cpu_level: CPU_LEVELS.len() as u8 - 1,
+            ram_level: RAM_LEVELS.len() as u8 - 1,
+            num_cores: CPU_LEVELS[CPU_LEVELS.len() - 1].0 * RACK_CAPACITY,
+            ram_capacity: RAM_LEVELS[RAM_LEVELS.len() - 1].0 * RACK_CAPACITY as i32,
+            cpu_speed: CPU_LEVELS[CPU_LEVELS.len() - 1].1,
             processing: 0,
             ram_usage: Memory::zero(),
             ram_reserved: Memory::zero(),
@@ -1185,6 +1195,15 @@ impl CloudNode {
             self.processing >= self.num_cores / 4
         } else {
             self.processing >= self.num_cores
+        }
+    }
+
+    /// Check how many cores are available for processing requests.
+    pub(crate) fn free_cores(&self, powersave: bool) -> u32 {
+        if powersave {
+            (self.num_cores / 4 - self.processing).max(0)
+        } else {
+            self.num_cores - self.processing
         }
     }
 }

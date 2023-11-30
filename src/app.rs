@@ -1,7 +1,7 @@
 use cloud_champion::central::cards::all::ALL_CARDS;
 use cloud_champion::central::engine::GameEngine;
 use cloud_champion::components::business::{Business, BusinessProps};
-use cloud_champion::components::hardware::{Equipment, NodeProps, OpenRack, Power};
+use cloud_champion::components::hardware::{Equipment, NodeProps, Power};
 use cloud_champion::components::menu::Menu;
 use cloud_champion::components::services::CloudService;
 use cloud_champion::components::total_stats::{TotalStats, TotalStatsProps};
@@ -103,7 +103,7 @@ pub(crate) struct GameProps {
 #[derive(Debug)]
 pub(crate) struct Game {
     state: WorldState,
-    engine: GameEngine<Game>,
+    engine: GameEngine,
     watch: GameWatch,
 }
 
@@ -125,7 +125,7 @@ impl Component for Game {
         let link = ctx.link().clone();
         let mut out = Self {
             state,
-            engine: GameEngine::new(link),
+            engine: GameEngine::new(),
             watch: GameWatch::new(),
         };
 
