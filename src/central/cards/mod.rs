@@ -1,6 +1,6 @@
 use crate::{
-    components::hardware::{DATACENTER_CAPACITY, RACK_CAPACITY},
-    CloudClientSpec, Cost, Money, Ops, ServiceKind, WorldState, TIME_UNITS_PER_MILLISECOND,
+    components::hardware::RACK_CAPACITY, CloudClientSpec, Cost, Money, Ops, ServiceKind,
+    WorldState, TIME_UNITS_PER_MILLISECOND,
 };
 
 use super::{
