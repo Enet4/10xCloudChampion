@@ -1,7 +1,7 @@
 [package]
 name = "gameoff2023-10x-cloud-champion"
 publish = false
-version = "1.0.0"
+version = "1.0.1"
 edition = "2021"
 description = "10x Cloud Champion: A simulation clicker game"
 readme = "README.md"
