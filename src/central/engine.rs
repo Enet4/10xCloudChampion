@@ -538,8 +538,8 @@ impl GameEngine {
         // if demand is very high, combine requests into one set
         // with a shorter frequency,
         // to reduce real CPU workload
-        if demand > 25_000. {
-            let k = (demand / 14_000.).floor().max(1.);
+        if demand > 30_000. {
+            let k = (demand / 20_000.).floor().clamp(1., 250.);
             (demand / k, k as u32)
         } else {
             (demand, 1)
