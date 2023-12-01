@@ -136,7 +136,7 @@ pub static GAME_SAVE_PERIOD: u64 = 360_000;
 pub static TIMEOUT_CLEANUP_PERIOD: u64 = 40_000;
 
 /// the time threshold for a request to be considered timed out
-pub static REQUEST_TIMEOUT: u64 = 240_000;
+pub static REQUEST_TIMEOUT: u64 = 300_000;
 
 /// The main game engine, which processes the game state
 /// and produces new events.
