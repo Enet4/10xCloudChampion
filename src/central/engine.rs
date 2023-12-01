@@ -132,6 +132,12 @@ pub static MAJOR_UPDATE_PERIOD: u64 = 3_200;
 /// time period after which the game is automatically saved to local storage
 pub static GAME_SAVE_PERIOD: u64 = 360_000;
 
+/// time period after which the game will clean up very old request events
+pub static TIMEOUT_CLEANUP_PERIOD: u64 = 45_000;
+
+/// the time threshold for a request to be considered timed out
+pub static REQUEST_TIMEOUT: u64 = 100_000;
+
 /// The main game engine, which processes the game state
 /// and produces new events.
 #[derive(Debug)]
@@ -595,6 +601,16 @@ impl GameEngine {
             }
         }
 
+        // check whether to cleanup timed out requests
+        if time / TIMEOUT_CLEANUP_PERIOD - state.time / TIMEOUT_CLEANUP_PERIOD > 0 {
+            // clean up waiting requests for each node
+            for node in &mut state.nodes {
+                let amount = node.clear_timedout_requests(time);
+                state.requests_dropped += amount as u64;
+                self.recent_requests_dropped += amount as u64;
+            }
+        }
+
         // check whether to save the game
         if time / GAME_SAVE_PERIOD - state.time / GAME_SAVE_PERIOD > 0 {
             // save the game
@@ -826,6 +842,7 @@ impl GameEngine {
                 } else {
                     // add to waiting queue
                     node.requests.push_back(WaitingRequest {
+                        timestamp: event.timestamp,
                         amount: event.amount,
                         user_spec_id: event.user_spec_id,
                         service: event.service,
@@ -1004,6 +1021,9 @@ pub struct WaitingRouteRequest {
 /// A request (or request set) waiting to be processed in a node.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct WaitingRequest {
+    /// The timestamp for when the request arrived
+    timestamp: Time,
+
     /// multiplier for the number of requests
     /// bundled into one
     amount: u32,
@@ -1208,6 +1228,27 @@ impl CloudNode {
         } else {
             self.num_cores - self.processing
         }
+    }
+
+    /// Clear requests from the node's waiting queue
+    /// which have timed out.
+    ///
+    /// Returns the number of requests dropped by op amount.
+    fn clear_timedout_requests(&mut self, time: u64) -> u32 {
+        let mut amount = 0;
+        self.requests.retain(|request| {
+            let timedout = request.timestamp + REQUEST_TIMEOUT < time;
+
+            if timedout {
+                // drop memory allocated for the request
+                self.ram_usage -= request.mem_required;
+                // count request as dropped
+                amount += request.amount;
+            }
+
+            !timedout
+        });
+        amount
     }
 }
 
