@@ -159,7 +159,6 @@ impl Component for Game {
     fn update(&mut self, ctx: &Context<Self>, msg: Self::Message) -> bool {
         match msg {
             GameMsg::Action(action) => {
-                gloo_console::debug!(format!("Received action: {:?}", action));
                 self.engine.apply_action(&mut self.state, action);
                 true
             }

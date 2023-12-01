@@ -203,9 +203,7 @@ impl GameEngine {
                 service.price = new_price;
 
                 let x = service.calculate_demand(demand);
-                gloo_console::debug!("Demand based on price changed to ", x);
                 let (y, z) = Self::group_demand(x);
-                gloo_console::debug!("Group demand for this service is: ", y, z);
             }
             PlayerAction::UpgradeCpu { node } => {
                 let funds = state.funds;
@@ -559,11 +557,6 @@ impl GameEngine {
             // add a safety net from events
             // which are in the past but were not consumed
             if next_event_time < state.time {
-                gloo_console::debug!(
-                    "Dropped past event with timestamp",
-                    next_event_time,
-                    "(this could be a bug)"
-                );
                 continue;
             }
             if next_event_time > time {
@@ -694,8 +687,6 @@ impl GameEngine {
                         let node = state.node_mut(node_num).unwrap();
                         // drop request if node is busy
                         if node.is_busy(powersave) {
-                            gloo_console::debug!("node ", node_num, " dropped a request");
-
                             state.requests_dropped += event.amount as u64;
                             self.recent_requests_dropped += event.amount as u64;
                         } else {
