@@ -197,14 +197,9 @@ impl GameEngine {
                 state.electricity.pay_bills();
             }
             PlayerAction::ChangePrice { kind, new_price } => {
-                let demand = state.demand;
                 // change the price and recalculate demand
                 let service = state.service_by_kind_mut(kind);
                 service.price = new_price;
-
-                let x = service.calculate_demand(demand);
-                let (y, z) = Self::group_demand(x);
-                gloo_console::debug!("Demand is", x, ", grouped as", z, " @ ", y);
             }
             PlayerAction::UpgradeCpu { node } => {
                 let funds = state.funds;
