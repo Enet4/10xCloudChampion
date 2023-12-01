@@ -785,6 +785,7 @@ impl GameEngine {
                 if !node.reserve_for(mem_reserve_required) {
                     // can't reserve, drop the request
                     state.requests_dropped += event.amount as u64;
+                    self.recent_requests_dropped += event.amount as u64;
                     return;
                 }
 
