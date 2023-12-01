@@ -204,6 +204,7 @@ impl GameEngine {
 
                 let x = service.calculate_demand(demand);
                 let (y, z) = Self::group_demand(x);
+                gloo_console::debug!("Demand is", x, ", grouped as", z, " @ ", y);
             }
             PlayerAction::UpgradeCpu { node } => {
                 let funds = state.funds;
@@ -840,6 +841,7 @@ impl GameEngine {
                 node_num,
                 ram_required,
             } => {
+                let powersave = state.is_powersaving();
                 let routing_level = state.routing_level;
                 let software_level = state.software_level;
                 if state.node(node_num).is_none() {
@@ -907,28 +909,6 @@ impl GameEngine {
                         bad: request.bad,
                         kind: RequestEventStage::RequestRouted { node_num },
                     });
-                } else if let Some(request) = node.requests.pop_front() {
-                    // pop one and schedule a new request processed event
-                    let duration =
-                        node.time_per_request(event.service, software_level) * request.amount;
-
-                    let service = request.service;
-                    let bad = if let Some(id) = request.user_spec_id {
-                        state.user_spec(id).map(|spec| spec.bad).unwrap_or(false)
-                    } else {
-                        false
-                    };
-                    push_event(RequestEvent {
-                        timestamp: event.timestamp + duration as u64,
-                        user_spec_id: request.user_spec_id,
-                        amount: request.amount,
-                        service,
-                        bad,
-                        kind: RequestEventStage::RequestProcessed {
-                            node_num,
-                            ram_required: request.mem_required,
-                        },
-                    })
                 } else {
                     // decrement processing on the processing node
                     if node.processing == 0 {
@@ -939,6 +919,41 @@ impl GameEngine {
                         );
                     } else {
                         node.processing -= 1;
+                    }
+
+                    let cores_available = node.free_cores(powersave);
+                    for _ in 0..cores_available {
+                        // create a narrower borrow of the node
+                        // so I can query the state for user_specs
+                        let node = state.node_mut(node_num).unwrap();
+                        if let Some(request) = node.requests.pop_front() {
+                            // pop one and schedule a new request processed event
+                            let duration = node.time_per_request(event.service, software_level)
+                                * request.amount;
+
+                            // increment processing
+                            node.processing += 1;
+
+                            let service = request.service;
+                            let bad = if let Some(id) = request.user_spec_id {
+                                state.user_spec(id).map(|spec| spec.bad).unwrap_or(false)
+                            } else {
+                                false
+                            };
+                            push_event(RequestEvent {
+                                timestamp: event.timestamp + duration as u64,
+                                user_spec_id: request.user_spec_id,
+                                amount: request.amount,
+                                service,
+                                bad,
+                                kind: RequestEventStage::RequestProcessed {
+                                    node_num,
+                                    ram_required: request.mem_required,
+                                },
+                            })
+                        } else {
+                            break;
+                        }
                     }
                 }
 
