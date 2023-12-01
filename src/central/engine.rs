@@ -133,10 +133,10 @@ pub static MAJOR_UPDATE_PERIOD: u64 = 3_200;
 pub static GAME_SAVE_PERIOD: u64 = 360_000;
 
 /// time period after which the game will clean up very old request events
-pub static TIMEOUT_CLEANUP_PERIOD: u64 = 45_000;
+pub static TIMEOUT_CLEANUP_PERIOD: u64 = 40_000;
 
 /// the time threshold for a request to be considered timed out
-pub static REQUEST_TIMEOUT: u64 = 100_000;
+pub static REQUEST_TIMEOUT: u64 = 240_000;
 
 /// The main game engine, which processes the game state
 /// and produces new events.
