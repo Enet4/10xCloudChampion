@@ -4,6 +4,8 @@
 
 A Cloud computing simulation/clicker game.
 
+Play [here on GitHub](https://enet4.github.io/10xCloudChampion/) or [on itch.io](https://e-net4.itch.io/10x-cloud-champion).
+
 ## Setting up
 
 This is a Yew app that's built with [Trunk].
